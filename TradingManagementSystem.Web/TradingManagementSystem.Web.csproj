@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\TradingManagementSystem.Application\TradingManagementSystem.Application.csproj" />
     <ProjectReference Include="..\TradingManagementSystem.Domain\TradingManagementSystem.Domain.csproj" />
     <ProjectReference Include="..\TradingManagementSystem.Infrastructure\TradingManagementSystem.Infrastructure.csproj" />
