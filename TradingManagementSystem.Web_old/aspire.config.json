@@ -1,0 +1,5 @@
+{
+  "appHost": {
+    "path": "TradingManagementSystem.Web.AppHost/TradingManagementSystem.Web.AppHost.csproj"
+  }
+}

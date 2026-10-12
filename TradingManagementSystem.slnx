@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="TradingManagementSystem.Application/TradingManagementSystem.Application.csproj" />
+  <Project Path="TradingManagementSystem.Demo/TradingManagementSystem.Demo.csproj" />
+  <Project Path="TradingManagementSystem.Domain/TradingManagementSystem.Domain.csproj" />
+  <Project Path="TradingManagementSystem.Infrastructure/TradingManagementSystem.Infrastructure.csproj" />
+  <Project Path="TradingManagementSystem.Web/TradingManagementSystem.Web.csproj" Id="e538296a-52f1-4a89-9926-3f0d3fd5a111" />
+</Solution>
