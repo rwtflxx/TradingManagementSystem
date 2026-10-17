@@ -1,6 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿
+using System;
+using System.Net.Mail;
 
 namespace TradingManagementSystem.Domain.Entities;
 
@@ -22,9 +22,22 @@ public class Supplier
         string email,
         string address)
     {
-        Name = name;
-        Phone = phone;
-        Email = email;
-        Address = address;
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new ArgumentException(
+                "Supplier name cannot be empty.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(email) &&
+            !MailAddress.TryCreate(email, out _))
+        {
+            throw new ArgumentException(
+                "Supplier email is invalid.");
+        }
+
+        Name = name.Trim();
+        Phone = phone?.Trim() ?? string.Empty;
+        Email = email?.Trim() ?? string.Empty;
+        Address = address?.Trim() ?? string.Empty;
     }
 }
