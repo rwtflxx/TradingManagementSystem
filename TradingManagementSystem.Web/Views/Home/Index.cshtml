@@ -1,15 +1,52 @@
-﻿@model TradingManagementSystem.Web.Controllers.DashboardStats
-@{
-    ViewData["Title"] = "Головна";
-}
-<div class="page-heading"><div><span class="eyebrow">ОГЛЯД СИСТЕМИ</span><h1>Панель керування</h1><p>Актуальні показники торгової організації</p></div><span class="small-chip">Поточні дані MongoDB</span></div>
-<div class="stats-grid">
-    <a class="stat-card" asp-controller="Catalog" asp-action="Products"><span>Товари</span><strong>@Model.Products</strong><small>Каталог продукції</small></a>
-    <a class="stat-card" asp-controller="Catalog" asp-action="TradingPoints"><span>Торгові точки</span><strong>@Model.TradingPoints</strong><small>Філії та магазини</small></a>
-    <a class="stat-card" asp-controller="Catalog" asp-action="Inventory"><span>Низькі залишки</span><strong class="accent-number">@Model.LowStock</strong><small>Позиції для уваги</small></a>
-    <a class="stat-card" asp-controller="Catalog" asp-action="Inventory"><span>Продажі</span><strong>@Model.Sales</strong><small>Проведені операції</small></a>
+@model TradingManagementSystem.Web.Controllers.DashboardStats
+@{ ViewData["Title"] = "Головна"; }
+<div class="sf-dashboard-intro">
+    <div>
+        <span class="eyebrow">ОГЛЯД СИСТЕМИ</span>
+        <h1>Панель керування</h1>
+        <p>Усі ключові показники торгової організації — в одному місці.</p>
+    </div>
+    <span class="sf-live-chip"><span class="sf-live-dot"></span> Дані з MongoDB</span>
 </div>
-<div class="panel-grid">
-    <section class="content-card"><span class="eyebrow">ПРОЦЕС</span><h2>Робота з товарами</h2><p>Створення закупівлі не змінює запас. Надходження збільшує кількість, а продаж зменшує залишок.</p><div class="flowline"><span>Закупівля</span><b>→</b><span>Надходження</span><b>→</b><span>Продаж</span></div></section>
-    <section class="content-card"><span class="eyebrow">СТАН ПРОЄКТУ</span><h2>Функціональні модулі</h2><p>Додано облік товарів, постачальників, торгових точок, надходжень та продажів.</p><p class="note">Створення закупівель і продажів через окремі вебформи та Smart Inventory — наступні кроки. Поки доступні через API.</p><a class="text-link" href="/swagger">Відкрити Swagger →</a></section>
+<div class="stats-grid">
+    <a class="stat-card sf-stat-products" asp-controller="Catalog" asp-action="Products">
+        <span class="sf-stat-top"><span>Товари</span><span class="sf-stat-icon" aria-hidden="true">▣</span></span>
+        <strong>@Model.Products</strong><small>У каталозі продукції</small><span class="sf-stat-more">Переглянути каталог →</span>
+    </a>
+    <a class="stat-card sf-stat-stores" asp-controller="Catalog" asp-action="TradingPoints">
+        <span class="sf-stat-top"><span>Торгові точки</span><span class="sf-stat-icon" aria-hidden="true">⌂</span></span>
+        <strong>@Model.TradingPoints</strong><small>Філії та магазини</small><span class="sf-stat-more">Переглянути точки →</span>
+    </a>
+    <a class="stat-card sf-stat-alerts" asp-controller="Catalog" asp-action="Inventory">
+        <span class="sf-stat-top"><span>Низькі залишки</span><span class="sf-stat-icon" aria-hidden="true">!</span></span>
+        <strong class="accent-number">@Model.LowStock</strong><small>Позиції, що потребують уваги</small><span class="sf-stat-more">Переглянути залишки →</span>
+    </a>
+    <a class="stat-card sf-stat-sales" asp-controller="Catalog" asp-action="Sales">
+        <span class="sf-stat-top"><span>Продажі</span><span class="sf-stat-icon" aria-hidden="true">↗</span></span>
+        <strong>@Model.Sales</strong><small>Зареєстровані операції</small><span class="sf-stat-more">Історія продажів →</span>
+    </a>
+</div>
+<div class="panel-grid sf-dashboard-panels">
+    <section class="content-card sf-operations-panel">
+        <span class="eyebrow">ОСНОВНИЙ ПРОЦЕС</span>
+        <h2>Як працює StockFlow</h2>
+        <p>Закупівля фіксує замовлення, надходження додає товар на склад, а продаж автоматично списує його із залишків.</p>
+        <div class="sf-process-steps">
+            <div class="sf-process-step"><span>01</span><strong>Закупівля</strong><small>Створення замовлення</small></div>
+            <div class="sf-process-step"><span>02</span><strong>Надходження</strong><small>Оприбуткування товару</small></div>
+            <div class="sf-process-step"><span>03</span><strong>Продаж</strong><small>Оновлення залишку</small></div>
+        </div>
+    </section>
+    <section class="content-card sf-upcoming-panel">
+        <span class="eyebrow">МОЖЛИВОСТІ СИСТЕМИ</span>
+        <h2>Керування торговою організацією</h2>
+        <p>Товари, постачальники, торгові точки та облік операцій доступні в єдиному робочому просторі.</p>
+        <div class="sf-feature-list">
+            <div><span class="sf-feature-dot"></span> Облік закупівель і надходжень</div>
+            <div><span class="sf-feature-dot"></span> Реєстрація продажів</div>
+            <div><span class="sf-feature-dot"></span> Контроль товарних залишків</div>
+        </div>
+        <p class="note">Вебформи торгових операцій та Smart Inventory ще розробляються. API доступне в Swagger.</p>
+        <a class="text-link" href="/swagger">Відкрити Swagger →</a>
+    </section>
 </div>

@@ -1,0 +1,55 @@
+@model TradingManagementSystem.Web.Models.ProfilePageViewModel
+@{
+    ViewData["Title"] = "Мій профіль";
+    var roleName = Model.Role switch {
+        "Director" => "Директор",
+        "TradingPointManager" => "Завідувач торгової точки",
+        "SupplyManager" => "Менеджер із постачання",
+        "Seller" => "Продавець",
+        _ => Model.Role
+    };
+    var initials = (Model.Details.FirstName.Length > 0 ? Model.Details.FirstName[..1] : "S") +
+                   (Model.Details.LastName.Length > 0 ? Model.Details.LastName[..1] : "F");
+}
+<div class="page-heading">
+    <div><span class="eyebrow">МІЙ ОБЛІКОВИЙ ЗАПИС</span><h1>Профіль і налаштування</h1><p>Особисті дані, безпека та параметри інтерфейсу в одному місці.</p></div>
+</div>
+<div class="sf-profile-hero">
+    <div class="sf-profile-badge">@initials.ToUpperInvariant()</div>
+    <div class="sf-profile-hero-copy"><h2>@Model.Details.FirstName @Model.Details.LastName</h2><p>@@@Model.Details.Login <span aria-hidden="true">·</span> @roleName</p></div>
+    <span class="sf-status-pill">@(Model.IsActive ? "● Активний акаунт" : "○ Неактивний")</span>
+</div>
+<div class="sf-profile-grid">
+    <section class="content-card sf-profile-panel">
+        <div class="sf-panel-heading"><div class="sf-panel-mark">01</div><div><h2>Особисті дані</h2><p>Можеш змінити ім'я, прізвище та логін для входу.</p></div></div>
+        <form asp-controller="Profile" asp-action="UpdateDetails" method="post">
+            <div asp-validation-summary="All" class="validation-summary" role="alert"></div>
+            <div class="form-grid">
+                <div><label asp-for="Details.FirstName">Ім'я</label><input asp-for="Details.FirstName" class="form-control" autocomplete="given-name" required /></div>
+                <div><label asp-for="Details.LastName">Прізвище</label><input asp-for="Details.LastName" class="form-control" autocomplete="family-name" required /></div>
+                <div class="full"><label asp-for="Details.Login">Логін</label><input asp-for="Details.Login" class="form-control" autocomplete="username" required /><div class="sf-field-note">Латиниця, цифри, крапка, дефіс або підкреслення (3–32 символи).</div></div>
+            </div>
+            <div class="sf-form-foot"><button class="primary-btn" type="submit">Зберегти зміни</button></div>
+        </form>
+    </section>
+    <section class="content-card sf-profile-panel">
+        <div class="sf-panel-heading"><div class="sf-panel-mark">02</div><div><h2>Безпека</h2><p>Зміни пароль, щоб захистити свій обліковий запис.</p></div></div>
+        <form asp-controller="Profile" asp-action="UpdatePassword" method="post">
+            <div asp-validation-summary="All" class="validation-summary" role="alert"></div>
+            <label asp-for="Password.CurrentPassword">Поточний пароль</label><input asp-for="Password.CurrentPassword" type="password" class="form-control" autocomplete="current-password" required />
+            <label asp-for="Password.NewPassword">Новий пароль</label><input asp-for="Password.NewPassword" type="password" class="form-control" autocomplete="new-password" minlength="10" required />
+            <label asp-for="Password.ConfirmPassword">Повторити новий пароль</label><input asp-for="Password.ConfirmPassword" type="password" class="form-control" autocomplete="new-password" minlength="10" required />
+            <div class="sf-field-note">Не менше 10 символів. Для зміни потрібно знати поточний пароль.</div>
+            <div class="sf-form-foot"><button class="subtle-btn" type="submit">Оновити пароль</button></div>
+        </form>
+    </section>
+    <section class="content-card sf-profile-panel">
+        <div class="sf-panel-heading"><div class="sf-panel-mark">03</div><div><h2>Налаштування вигляду</h2><p>Одна кнопка перемикає три теми. Твій вибір збережеться в цьому браузері.</p></div></div>
+        <div class="sf-setting-line"><span>Поточна тема</span><strong data-sf-theme-label>Комбінована</strong></div>
+        <button class="theme-cycle sf-profile-theme-btn" type="button" data-sf-theme-cycle><span data-sf-theme-icon aria-hidden="true">◐</span> Перемкнути тему</button>
+    </section>
+    <section class="content-card sf-profile-panel">
+        <div class="sf-panel-heading"><div class="sf-panel-mark">04</div><div><h2>Дані акаунта</h2><p>Ці системні поля змінюються адміністратором.</p></div></div>
+        <dl class="sf-account-facts"><div><dt>Роль</dt><dd>@roleName</dd></div><div><dt>Статус</dt><dd>@(Model.IsActive ? "Активний" : "Неактивний")</dd></div><div><dt>ID користувача</dt><dd class="mono">@Model.Id</dd></div></dl>
+    </section>
+</div>
