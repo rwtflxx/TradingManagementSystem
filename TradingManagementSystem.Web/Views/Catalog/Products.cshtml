@@ -1,0 +1,11 @@
+﻿@model List<TradingManagementSystem.Domain.Entities.Product>
+@{ ViewData["Title"] = "Товари"; }
+<div class="page-heading"><div><span class="eyebrow">КАТАЛОГ</span><h1>Товари</h1><p>Усього записів: @Model.Count</p></div></div>
+@if(User.IsInRole("Director") || User.IsInRole("SupplyManager"))
+{
+    <details class="content-card form-details"><summary>+ Додати товар</summary>
+    <form asp-action="AddProduct" method="post" class="form-grid"><input class="form-control" name="name" placeholder="Назва" required /><input class="form-control" name="sku" placeholder="SKU" required /><input class="form-control" name="category" placeholder="Категорія" /><input class="form-control" name="sellingPrice" type="number" step="0.01" min="0" placeholder="Ціна" required /><input class="form-control full" name="description" placeholder="Опис" /><button class="primary-btn" type="submit">Зберегти товар</button></form></details>
+}
+<div class="table-card"><table class="data-table"><thead><tr><th>Назва</th><th>SKU</th><th>Категорія</th><th>Ціна</th></tr></thead><tbody>
+@foreach(var p in Model) { <tr><td><strong>@p.Name</strong></td><td>@p.Sku</td><td>@p.Category</td><td>@p.SellingPrice</td></tr> }
+</tbody></table></div>

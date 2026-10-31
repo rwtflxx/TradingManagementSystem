@@ -1,0 +1,12 @@
+﻿@model TradingManagementSystem.Web.Models.EmployeeInput
+@using TradingManagementSystem.Domain.Enums
+@{ ViewData["Title"] = "Новий працівник"; }
+<div class="page-heading"><div><span class="eyebrow">ПРАЦІВНИКИ</span><h1>Додати працівника</h1></div></div>
+<div class="content-card narrow"><form method="post" asp-action="Create"><div asp-validation-summary="All" class="validation-summary"></div>
+<label>Ім'я</label><input asp-for="FirstName" class="form-control" required />
+<label>Прізвище</label><input asp-for="LastName" class="form-control" required />
+<label>Логін (латиниця)</label><input asp-for="Login" class="form-control" required />
+<label>Пароль (від 10 символів)</label><input asp-for="Password" type="password" class="form-control" minlength="10" autocomplete="new-password" required />
+<label>Роль</label><select asp-for="Role" asp-items="Html.GetEnumSelectList<EmployeeRole>()" class="form-select"></select>
+<button class="primary-btn mt-3" type="submit">Створити працівника</button>
+</form></div>

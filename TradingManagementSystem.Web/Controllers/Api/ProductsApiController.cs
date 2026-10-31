@@ -42,6 +42,7 @@ public class ProductsApiController : ControllerBase
         return Ok(product);
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager")]
     [HttpPost]
     public async Task<ActionResult<Product>> Create(
         CreateProductRequest request)
@@ -90,6 +91,7 @@ public class ProductsApiController : ControllerBase
             product);
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager")]
     [HttpPut("{id}")]
     public async Task<ActionResult<Product>> Update(
         string id,
@@ -124,6 +126,7 @@ public class ProductsApiController : ControllerBase
         return Ok(product);
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id)
     {

@@ -1,0 +1,4 @@
+﻿@model List<TradingManagementSystem.Domain.Entities.InventoryItem>
+@{ ViewData["Title"] = "Залишки"; }
+<div class="page-heading"><div><span class="eyebrow">СКЛАД</span><h1>Товарні залишки</h1><p>Кількість товару в торгових точках</p></div></div>
+<div class="table-card"><table class="data-table"><thead><tr><th>Товар (ID)</th><th>Торгова точка (ID)</th><th>Кількість</th><th>Мінімум</th><th>Стан</th></tr></thead><tbody>@foreach(var i in Model) { <tr><td class="mono">@i.ProductId</td><td class="mono">@i.TradingPointId</td><td><strong>@i.Quantity</strong></td><td>@i.MinimumQuantity</td><td><span class="@(i.Quantity <= i.MinimumQuantity ? "warning-pill" : "ok-pill")">@(i.Quantity <= i.MinimumQuantity ? "Низький" : "Достатньо")</span></td></tr> }</tbody></table></div>

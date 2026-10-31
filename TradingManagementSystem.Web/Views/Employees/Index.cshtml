@@ -1,0 +1,6 @@
+﻿@model List<TradingManagementSystem.Domain.Entities.Employee>
+@{ ViewData["Title"] = "Працівники"; }
+<div class="page-heading"><div><span class="eyebrow">КЕРУВАННЯ ДОСТУПОМ</span><h1>Працівники</h1><p>Облікові записи та ролі користувачів</p></div><a asp-action="Create" class="primary-btn">+ Додати працівника</a></div>
+<div class="table-card"><table class="data-table"><thead><tr><th>Працівник</th><th>Логін</th><th>Роль</th><th>Стан</th></tr></thead><tbody>
+@foreach(var item in Model) { <tr><td>@item.FirstName @item.LastName</td><td>@item.Login</td><td>@item.Role</td><td>@(item.IsActive ? "Активний" : "Вимкнений")</td></tr> }
+</tbody></table></div>

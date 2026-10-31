@@ -1,0 +1,4 @@
+﻿@model List<TradingManagementSystem.Domain.Entities.Receipt>
+@{ ViewData["Title"] = "Надходження"; }
+<div class="page-heading"><div><span class="eyebrow">СКЛАД</span><h1>Надходження товарів</h1><p>Зареєстровані фактичні надходження</p></div><a class="subtle-btn" href="/swagger">Реєструвати через API →</a></div>
+<div class="table-card"><table class="data-table"><thead><tr><th>ID</th><th>Закупівля</th><th>Дата</th><th>Зареєстровано</th></tr></thead><tbody>@foreach(var r in Model) { <tr><td class="mono">@r.Id</td><td class="mono">@r.PurchaseId</td><td>@r.ReceivedAt.ToLocalTime().ToString("dd.MM.yyyy")</td><td>@(r.IsRegistered ? "Так" : "Ні")</td></tr> }</tbody></table></div>

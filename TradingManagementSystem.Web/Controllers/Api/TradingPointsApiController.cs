@@ -40,6 +40,7 @@ public class TradingPointsApiController : ControllerBase
         return Ok(point);
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director")]
     [HttpPost]
     public async Task<ActionResult<TradingPoint>> Create(
         TradingPointRequest request)
@@ -65,6 +66,7 @@ public class TradingPointsApiController : ControllerBase
             point);
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director")]
     [HttpPut("{id}")]
     public async Task<ActionResult<TradingPoint>> Update(
         string id,
@@ -90,6 +92,7 @@ public class TradingPointsApiController : ControllerBase
         return Ok(point);
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id)
     {
@@ -124,3 +127,4 @@ public class TradingPointRequest
     public string Name { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
 }
+

@@ -20,20 +20,23 @@ public class SalesApiController : ControllerBase
         _saleService = saleService;
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,TradingPointManager,Seller")]
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var sales = await _context.Sales.Find(_ => true).ToListAsync();
+        var salesFilter = User.IsInRole("Seller") ? Builders<Sale>.Filter.Eq(s => s.SellerId, User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value) : Builders<Sale>.Filter.Empty; var sales = await _context.Sales.Find(salesFilter).ToListAsync();
         return Ok(sales);
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,TradingPointManager,Seller")]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(string id)
     {
         var sale = await _context.Sales.Find(s => s.Id == id).FirstOrDefaultAsync();
-        return sale == null ? NotFound() : Ok(sale);
+        return sale == null ? NotFound() : (User.IsInRole("Seller") && sale.SellerId != User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ? Forbid() : Ok(sale));
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,TradingPointManager,Seller")]
     [HttpPost]
     public async Task<IActionResult> Create(CreateSaleRequest request)
     {
@@ -41,7 +44,7 @@ public class SalesApiController : ControllerBase
         if (!Guid.TryParse(request.RequestId, out _))
             return BadRequest("RequestId must be a valid GUID.");
 
-        if (string.IsNullOrWhiteSpace(request.SellerId) ||
+        if (
             string.IsNullOrWhiteSpace(request.TradingPointId))
             return BadRequest("SellerId and TradingPointId are required.");
 
@@ -65,7 +68,7 @@ public class SalesApiController : ControllerBase
         var sale = new Sale
         {
             Id = request.RequestId,
-            SellerId = request.SellerId.Trim(),
+            SellerId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty,
             TradingPointId = request.TradingPointId,
             PaymentMethod = request.PaymentMethod
         };
@@ -175,3 +178,4 @@ public class CreateSaleItemRequest
     public string ProductId { get; set; } = string.Empty;
     public int Quantity { get; set; }
 }
+

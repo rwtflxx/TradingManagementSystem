@@ -23,6 +23,7 @@ public class ReceiptsApiController : ControllerBase
         _receiptService = receiptService;
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager")]
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -33,6 +34,7 @@ public class ReceiptsApiController : ControllerBase
         return Ok(receipts);
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager")]
     [HttpPost]
     public async Task<IActionResult> Register(
         RegisterReceiptRequest request)
@@ -118,3 +120,4 @@ public class RegisterReceiptRequest
 {
     public string PurchaseId { get; set; } = string.Empty;
 }
+

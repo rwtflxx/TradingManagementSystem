@@ -1,0 +1,4 @@
+﻿@model List<TradingManagementSystem.Domain.Entities.Purchase>
+@{ ViewData["Title"] = "Закупівлі"; }
+<div class="page-heading"><div><span class="eyebrow">ЗАКУПІВЛІ</span><h1>Замовлення постачальникам</h1><p>Перегляд існуючих закупівель</p></div><a class="subtle-btn" href="/swagger">Створити через API →</a></div>
+<div class="table-card"><table class="data-table"><thead><tr><th>ID</th><th>Дата</th><th>Статус</th><th>Позицій</th><th>Сума</th></tr></thead><tbody>@foreach(var p in Model) { <tr><td class="mono">@p.Id</td><td>@p.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")</td><td>@p.Status</td><td>@p.Items.Count</td><td>@p.TotalAmount</td></tr> }</tbody></table></div>

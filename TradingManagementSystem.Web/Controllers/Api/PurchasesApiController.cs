@@ -17,6 +17,7 @@ public class PurchasesApiController : ControllerBase
         _context = context;
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager")]
     [HttpGet]
     public async Task<ActionResult<List<Purchase>>> GetAll()
     {
@@ -27,6 +28,7 @@ public class PurchasesApiController : ControllerBase
         return Ok(purchases);
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager")]
     [HttpGet("{id}")]
     public async Task<ActionResult<Purchase>> GetById(string id)
     {
@@ -40,6 +42,7 @@ public class PurchasesApiController : ControllerBase
         return Ok(purchase);
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager")]
     [HttpPost]
     public async Task<ActionResult<Purchase>> Create(
         CreatePurchaseRequest request)
@@ -126,3 +129,4 @@ public class CreatePurchaseItemRequest
 
     public decimal PurchasePrice { get; set; }
 }
+

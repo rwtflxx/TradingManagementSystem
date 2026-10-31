@@ -1,0 +1,14 @@
+@model TradingManagementSystem.Web.Models.EmployeeInput
+@{ ViewData["Title"] = "Перший запуск"; }
+<div class="auth-card">
+    <div class="auth-logo">SF</div><span class="eyebrow">ПЕРШИЙ ЗАПУСК</span>
+    <h1>Створити директора</h1>
+    <p>Створи власний логін і пароль. Ця форма доступна лише локально в режимі розробки, поки в базі немає працівників.</p>
+    <form method="post" asp-action="Index"><div asp-validation-summary="All" class="validation-summary"></div>
+        <label>Ім'я</label><input asp-for="FirstName" class="form-control" required />
+        <label>Прізвище</label><input asp-for="LastName" class="form-control" required />
+        <label>Логін (латиниця)</label><input asp-for="Login" class="form-control" required />
+        <label>Пароль (від 10 символів)</label><input asp-for="Password" type="password" class="form-control" minlength="10" autocomplete="new-password" required />
+        <button type="submit" class="primary-btn w-100 mt-3">Створити директора</button>
+    </form>
+</div>

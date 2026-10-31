@@ -1,0 +1,15 @@
+@model TradingManagementSystem.Web.Models.LoginInput
+@{ ViewData["Title"] = "Вхід"; }
+<div class="auth-card">
+    <div class="auth-logo">SF</div>
+    <span class="eyebrow">STOCKFLOW · УПРАВЛІННЯ ТОРГІВЛЕЮ</span>
+    <h1>Вхід у систему</h1><p>Увійди під обліковим записом працівника.</p>
+    @if (TempData["Flash"] is string message) { <div class="flash">@message</div> }
+    <form method="post" asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]">
+        <div asp-validation-summary="All" class="validation-summary"></div>
+        <label asp-for="Login">Логін</label><input asp-for="Login" autocomplete="username" class="form-control" />
+        <label asp-for="Password">Пароль</label><input asp-for="Password" type="password" autocomplete="current-password" class="form-control" />
+        <button class="primary-btn w-100 mt-3" type="submit">Увійти</button>
+    </form>
+    <div class="auth-hint">Перший запуск? <a asp-controller="Setup" asp-action="Index">Створити директора</a> (лише локально).</div>
+</div>

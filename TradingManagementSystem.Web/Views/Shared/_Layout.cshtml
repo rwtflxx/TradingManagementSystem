@@ -1,50 +1,75 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+@using System.Security.Claims
+<!DOCTYPE html>
+<html lang="uk">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - TradingManagementSystem.Web</title>
-    <script type="importmap"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] · StockFlow</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/TradingManagementSystem.Web.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/tms.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/stockflow-themes.css" asp-append-version="true" />
+    <script>
+    (function(){try{var t=localStorage.getItem('stockflow.theme.v1');document.documentElement.setAttribute('data-sf-theme', ['mixed','light','dark'].indexOf(t)>=0?t:'mixed');}catch(e){document.documentElement.setAttribute('data-sf-theme','mixed');}})();
+    </script>
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">TradingManagementSystem.Web</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                </div>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <div class="app-shell">
+            <aside class="sidebar">
+                <a class="brand" asp-controller="Home" asp-action="Index"><span class="brand-icon">SF</span><span>StockFlow<small>СИСТЕМА УПРАВЛІННЯ</small></span></a>
+                <nav class="side-nav" aria-label="Основна навігація">
+                    <a asp-controller="Home" asp-action="Index">◫ <span>Головна</span></a>
+                    <a asp-controller="Catalog" asp-action="Products">▦ <span>Товари</span></a>
+                    @if (!User.IsInRole("Seller")) { <a asp-controller="Catalog" asp-action="Suppliers">◇ <span>Постачальники</span></a> }
+                    <a asp-controller="Catalog" asp-action="TradingPoints">⌂ <span>Торгові точки</span></a>
+                    @if (User.IsInRole("Director") || User.IsInRole("SupplyManager"))
+                    {
+                        <a asp-controller="Catalog" asp-action="Purchases">▤ <span>Закупівлі</span></a>
+                        <a asp-controller="Catalog" asp-action="Receipts">↧ <span>Надходження</span></a>
+                    }
+                    @if (User.IsInRole("Director") || User.IsInRole("TradingPointManager") || User.IsInRole("Seller"))
+                    { <a asp-controller="Catalog" asp-action="Sales">◈ <span>Продажі</span></a> }
+                    <a asp-controller="Catalog" asp-action="Inventory">▥ <span>Залишки</span></a>
+                    @if (User.IsInRole("Director"))
+                    { <a asp-controller="Employees" asp-action="Index">♙ <span>Працівники</span></a> }
+                </nav>
+                <div class="side-bottom"><a asp-controller="Account" asp-action="ChangePassword">⚙ Змінити пароль</a></div>
+            </aside>
+            <div class="workspace">
+                <header class="topbar">
+                    <div class="topbar-title">StockFlow <span class="sf-header-hint">Управління торговою організацією</span></div>
+                    <div class="topbar-actions">
+<div class="theme-switch" role="group" aria-label="Тема оформлення">
+    <button type="button" data-sf-theme-choice="mixed" aria-label="Комбінована тема" aria-pressed="true" title="Комбінована тема">◧</button>
+    <button type="button" data-sf-theme-choice="light" aria-label="Світла тема" aria-pressed="false" title="Світла тема">☀</button>
+    <button type="button" data-sf-theme-choice="dark" aria-label="Темна тема" aria-pressed="false" title="Темна тема">☾</button>
+</div>
+                    <div class="profile"><span>@User.Identity.Name</span><span class="role-pill">@User.FindFirstValue(ClaimTypes.Role)</span>
+                        <form asp-controller="Account" asp-action="Logout" method="post"><button type="submit" class="logout-btn">Вийти</button></form>
+                    </div>
+                    </div>
+                </header>
+                <main class="page-content">
+                    @if (TempData["Flash"] is string notice) { <div class="flash">@notice</div> }
+                    @RenderBody()
+                </main>
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
-
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - TradingManagementSystem.Web - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>
-    </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    }
+    else
+    {
+        <div class="auth-shell">
+            <div class="auth-theme-switch"><div class="theme-switch" role="group" aria-label="Тема оформлення">
+    <button type="button" data-sf-theme-choice="mixed" aria-label="Комбінована тема" aria-pressed="true" title="Комбінована тема">◧</button>
+    <button type="button" data-sf-theme-choice="light" aria-label="Світла тема" aria-pressed="false" title="Світла тема">☀</button>
+    <button type="button" data-sf-theme-choice="dark" aria-label="Темна тема" aria-pressed="false" title="Темна тема">☾</button>
+</div></div>
+            <main class="auth-main">@RenderBody()</main>
+        </div>
+    }
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/stockflow-theme.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -1,0 +1,281 @@
+﻿# Install StockFlow brand and three themes (mixed/light/dark).
+# Place this file next to TradingManagementSystem.slnx and run from PowerShell.
+# Changes only Razor/CSS/JS. No MongoDB data, passwords, roles, C# or APIs touched.
+$ErrorActionPreference = 'Stop'
+$root = $PSScriptRoot
+$web = Join-Path $root 'TradingManagementSystem.Web'
+$sln = Join-Path $root 'TradingManagementSystem.slnx'
+if (-not (Test-Path -LiteralPath $sln)) { throw 'Put this script next to TradingManagementSystem.slnx.' }
+$layoutPath = Join-Path $web 'Views\Shared\_Layout.cshtml'
+$loginPath = Join-Path $web 'Views\Account\Login.cshtml'
+$setupPath = Join-Path $web 'Views\Setup\Index.cshtml'
+$baseCss = Join-Path $web 'wwwroot\css\tms.css'
+$themeCss = Join-Path $web 'wwwroot\css\stockflow-themes.css'
+$themeJs = Join-Path $web 'wwwroot\js\stockflow-theme.js'
+foreach ($path in @($layoutPath,$loginPath,$setupPath,$baseCss)) {
+  if (-not (Test-Path -LiteralPath $path)) { throw "Required file not found: $path. Make sure you already installed the Auth/UI package." }
+}
+$layout = [System.IO.File]::ReadAllText($layoutPath)
+$login = [System.IO.File]::ReadAllText($loginPath)
+$setup = [System.IO.File]::ReadAllText($setupPath)
+if ($layout.Contains('stockflow-theme.js')) { Write-Host 'StockFlow themes already installed. No changes made.' -ForegroundColor Yellow; exit 0 }
+if ((Test-Path $themeCss) -or (Test-Path $themeJs)) { throw 'StockFlow theme files already exist. Installation stopped to avoid overwriting anything.' }
+function Replace-Required([string] $source,[string] $old,[string] $new,[string] $description) {
+  if (-not $source.Contains($old)) { throw "Unexpected project version: cannot find $description. Nothing has been changed." }
+  return $source.Replace($old,$new)
+}
+$themeSwitch = @'
+<div class="theme-switch" role="group" aria-label="Тема оформлення">
+    <button type="button" data-sf-theme-choice="mixed" aria-label="Комбінована тема" aria-pressed="true" title="Комбінована тема">◧</button>
+    <button type="button" data-sf-theme-choice="light" aria-label="Світла тема" aria-pressed="false" title="Світла тема">☀</button>
+    <button type="button" data-sf-theme-choice="dark" aria-label="Темна тема" aria-pressed="false" title="Темна тема">☾</button>
+</div>
+'@
+$layout = Replace-Required $layout '<title>@ViewData["Title"] · Trading Management System</title>' '<title>@ViewData["Title"] · StockFlow</title>' 'page title'
+$newStyles = @'
+<link rel="stylesheet" href="~/css/tms.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/stockflow-themes.css" asp-append-version="true" />
+    <script>
+    (function(){try{var t=localStorage.getItem('stockflow.theme.v1');document.documentElement.setAttribute('data-sf-theme', ['mixed','light','dark'].indexOf(t)>=0?t:'mixed');}catch(e){document.documentElement.setAttribute('data-sf-theme','mixed');}})();
+    </script>
+'@
+$layout = Replace-Required $layout '<link rel="stylesheet" href="~/css/tms.css" asp-append-version="true" />' $newStyles 'stylesheet reference'
+$layout = Replace-Required $layout '<div class="brand"><span class="brand-icon">T</span><span>Trading<br/><small>Management System</small></span></div>' '<a class="brand" asp-controller="Home" asp-action="Index"><span class="brand-icon">SF</span><span>StockFlow<small>СИСТЕМА УПРАВЛІННЯ</small></span></a>' 'sidebar brand'
+$layout = Replace-Required $layout '<div class="topbar-title">Trading Management System</div>' '<div class="topbar-title">StockFlow <span class="sf-header-hint">Управління торговою організацією</span></div>' 'top bar brand'
+$layout = Replace-Required $layout '<div class="profile"><span>@User.Identity.Name</span>' ('<div class="topbar-actions">' + "`n" + $themeSwitch + "`n" + '                    <div class="profile"><span>@User.Identity.Name</span>') 'profile container'
+$layout = Replace-Required $layout '                </header>' ('                    </div>' + "`n" + '                </header>') 'end header'
+$layout = Replace-Required $layout '<main class="auth-main">@RenderBody()</main>' ('<div class="auth-shell">' + "`n" + '            <div class="auth-theme-switch">' + $themeSwitch + '</div>' + "`n" + '            <main class="auth-main">@RenderBody()</main>' + "`n" + '        </div>') 'anonymous layout'
+$layout = Replace-Required $layout '    @await RenderSectionAsync("Scripts", required: false)' ('    <script src="~/js/stockflow-theme.js" asp-append-version="true"></script>' + "`n" + '    @await RenderSectionAsync("Scripts", required: false)') 'scripts section'
+$login = Replace-Required $login '<div class="auth-logo">T</div>' '<div class="auth-logo">SF</div>' 'login logo'
+$login = Replace-Required $login 'TRADING MANAGEMENT SYSTEM' 'STOCKFLOW · УПРАВЛІННЯ ТОРГІВЛЕЮ' 'login brand'
+$setup = Replace-Required $setup '<div class="auth-logo">T</div>' '<div class="auth-logo">SF</div>' 'first-run logo'
+$stockflowCss = @'
+/* StockFlow | Theme layer. Uses existing tms.css; no Bootstrap or C# changes. */
+:root,
+html[data-sf-theme="mixed"] {
+  color-scheme: light;
+  --sf-bg: #f3f6fc;
+  --sf-surface: #ffffff;
+  --sf-surface-alt: #f6f8fd;
+  --sf-text: #17253d;
+  --sf-subtle: #667992;
+  --sf-border: #e1e8f1;
+  --sf-sidebar: #15253d;
+  --sf-sidebar-text: #becde0;
+  --sf-sidebar-muted: #92a7c4;
+  --sf-sidebar-hover: #233957;
+  --sf-sidebar-active: #2c4d7c;
+  --sf-sidebar-active-text: #ffffff;
+  --sf-primary: #386fe8;
+  --sf-primary-hover: #2759cf;
+  --sf-soft-blue: #edf3ff;
+  --sf-shadow: 0 8px 24px rgba(28,54,94,.045);
+  --sf-input: #ffffff;
+  --sf-info: #2761ba;
+  --sf-ok-bg: #e9f7ee;
+  --sf-ok-text: #2a784c;
+  --sf-warn-bg: #fff1de;
+  --sf-warn-text: #9e6419;
+}
+html[data-sf-theme="light"] {
+  color-scheme: light;
+  --sf-bg: #f6f8fd;
+  --sf-surface: #ffffff;
+  --sf-surface-alt: #f7f9fd;
+  --sf-text: #1b2b44;
+  --sf-subtle: #697b92;
+  --sf-border: #e1e7ef;
+  --sf-sidebar: #ffffff;
+  --sf-sidebar-text: #455a76;
+  --sf-sidebar-muted: #71829a;
+  --sf-sidebar-hover: #f0f5fc;
+  --sf-sidebar-active: #e8efff;
+  --sf-sidebar-active-text: #275cbd;
+  --sf-primary: #356ce0;
+  --sf-primary-hover: #2855b9;
+  --sf-soft-blue: #edf3ff;
+  --sf-shadow: 0 8px 24px rgba(28,54,94,.04);
+  --sf-input: #ffffff;
+  --sf-info: #245cae;
+  --sf-ok-bg: #e9f7ee;
+  --sf-ok-text: #2a784c;
+  --sf-warn-bg: #fff1de;
+  --sf-warn-text: #9e6419;
+}
+html[data-sf-theme="dark"] {
+  color-scheme: dark;
+  --sf-bg: #101827;
+  --sf-surface: #1b293d;
+  --sf-surface-alt: #24344b;
+  --sf-text: #edf3fe;
+  --sf-subtle: #a8b9cd;
+  --sf-border: #34465e;
+  --sf-sidebar: #0c1423;
+  --sf-sidebar-text: #bdcde2;
+  --sf-sidebar-muted: #8da4c0;
+  --sf-sidebar-hover: #1c2b43;
+  --sf-sidebar-active: #294674;
+  --sf-sidebar-active-text: #ffffff;
+  --sf-primary: #598bff;
+  --sf-primary-hover: #4478ee;
+  --sf-soft-blue: #2a4167;
+  --sf-shadow: 0 10px 30px rgba(0,0,0,.16);
+  --sf-input: #162338;
+  --sf-info: #a9c5ff;
+  --sf-ok-bg: #204638;
+  --sf-ok-text: #99e2b6;
+  --sf-warn-bg: #4b3923;
+  --sf-warn-text: #ffd48f;
+}
+/* Public theme tokens bridge to the first version of the UI. */
+html { background: var(--sf-bg); }
+body { background: var(--sf-bg); color: var(--sf-text); font-family: 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif; }
+:root { --bg:var(--sf-bg); --white:var(--sf-surface); --ink:var(--sf-text); --muted:var(--sf-subtle); --line:var(--sf-border); --blue:var(--sf-primary); --nav:var(--sf-sidebar); }
+.app-shell { background: var(--sf-bg); }
+.sidebar { background:var(--sf-sidebar); color:var(--sf-sidebar-text); border-right:1px solid var(--sf-border); width:254px; min-width:254px; padding:29px 16px 20px; }
+.brand { color:var(--sf-sidebar-active-text); text-decoration:none; margin:3px 11px 36px; gap:11px; font-weight:780; letter-spacing:-.45px; font-size:20px; }
+html[data-sf-theme="light"] .brand { color:var(--sf-text); }
+.brand:hover { color:var(--sf-sidebar-active-text); }
+html[data-sf-theme="light"] .brand:hover { color:var(--sf-text); }
+.brand small { color:var(--sf-sidebar-muted); letter-spacing:.3px; display:block; margin-top:4px; font-size:10px; font-weight:550; }
+.brand-icon { flex-shrink:0; width:42px; height:42px; background:linear-gradient(140deg,#3674e7,#5b91ff); color:#fff; font-size:14px; border-radius:13px; box-shadow:0 5px 16px rgba(44,104,227,.25); letter-spacing:-.6px; }
+.side-nav { gap:6px; }
+.side-nav a,.side-bottom a { color:var(--sf-sidebar-text); border-radius:10px; padding:12px 13px; gap:12px; font-size:13px; font-weight:550; transition:background-color .16s,color .16s; }
+.side-nav a:hover,.side-bottom a:hover { background:var(--sf-sidebar-hover); color:var(--sf-sidebar-active-text); }
+html[data-sf-theme="light"] .side-nav a:hover,html[data-sf-theme="light"] .side-bottom a:hover { color:var(--sf-text); }
+.side-nav a:first-child { background:transparent; color:var(--sf-sidebar-text); }
+.side-nav a.is-active, .side-nav a:first-child.is-active { background:var(--sf-sidebar-active); color:var(--sf-sidebar-active-text); font-weight:700; }
+.sf-nav-icon { width:19px; height:19px; display:inline-flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0; opacity:.94; }
+.side-bottom { border-top:1px solid var(--sf-border); padding-top:12px; }
+.workspace { background:var(--sf-bg); }
+.topbar { min-height:76px; height:auto; padding:15px 32px; background:var(--sf-surface); border-color:var(--sf-border); }
+.topbar-title { color:var(--sf-text); font-size:16px; font-weight:750; }
+.sf-header-hint { font-weight:450; font-size:11px; color:var(--sf-subtle); padding-left:12px; margin-left:12px; border-left:1px solid var(--sf-border); }
+.topbar-actions { display:flex; align-items:center; gap:19px; }
+.profile { color:var(--sf-text); gap:12px; }
+.role-pill,.small-chip { background:var(--sf-soft-blue); color:var(--sf-info); border:1px solid transparent; }
+.logout-btn { background:var(--sf-surface); color:var(--sf-subtle); border:1px solid var(--sf-border); }
+.logout-btn:hover { color:var(--sf-text); background:var(--sf-surface-alt); }
+.theme-switch { display:flex; align-items:center; gap:3px; padding:4px; background:var(--sf-surface-alt); border:1px solid var(--sf-border); border-radius:12px; }
+.theme-switch button { border:0; background:transparent; color:var(--sf-subtle); padding:8px 9px; border-radius:8px; font-size:12px; line-height:1; cursor:pointer; transition:background-color .15s,box-shadow .15s; }
+.theme-switch button:hover { color:var(--sf-text); }
+.theme-switch button[aria-pressed="true"] { color:var(--sf-text); background:var(--sf-surface); box-shadow:0 1px 5px rgba(22,41,67,.11); font-weight:700; }
+.theme-switch button:focus-visible,.side-nav a:focus-visible,.logout-btn:focus-visible { outline:2px solid var(--sf-primary); outline-offset:2px; }
+.page-content { padding:34px 36px; max-width:1480px; }
+.page-heading h1 { color:var(--sf-text); font-size:30px; }
+.page-heading p,.auth-card p,.content-card p { color:var(--sf-subtle); }
+.eyebrow { color:var(--sf-primary); }
+.stat-card,.content-card,.table-card { background:var(--sf-surface); color:var(--sf-text); border:1px solid var(--sf-border); box-shadow:var(--sf-shadow); border-radius:16px; }
+.stat-card { position:relative; overflow:hidden; min-height:161px; }
+.stat-card:after { content:""; position:absolute; width:84px; height:84px; border-radius:30px; background:var(--sf-soft-blue); opacity:.45; right:-35px; top:-38px; transform:rotate(23deg); pointer-events:none; }
+.stat-card>span,.stat-card small { color:var(--sf-subtle); }
+.stat-card strong { color:var(--sf-text); font-weight:800; }
+.stat-card:hover { color:var(--sf-text); border-color:var(--sf-primary); transform:translateY(-2px); transition:transform .16s,border-color .16s; }
+.accent-number { color:#e3a049 !important; }
+.content-card h2 { color:var(--sf-text); }
+.flowline span { background:var(--sf-soft-blue); color:var(--sf-info); }
+.flowline b { color:var(--sf-subtle); }
+.text-link { color:var(--sf-primary); }
+.table-card { background:var(--sf-surface); }
+.data-table th,.data-table td { border-color:var(--sf-border); }
+.data-table th { color:var(--sf-subtle); }
+.data-table td { color:var(--sf-text); }
+.data-table tbody tr:hover { background:var(--sf-surface-alt); }
+.primary-btn { background:var(--sf-primary); color:#fff; }
+.primary-btn:hover { background:var(--sf-primary-hover); color:#fff; }
+.subtle-btn { background:var(--sf-soft-blue); color:var(--sf-info); }
+.subtle-btn:hover { background:var(--sf-sidebar-active); color:var(--sf-sidebar-active-text); }
+.form-details summary { color:var(--sf-info); }
+label { color:var(--sf-text); }
+.form-control,.form-select { background:var(--sf-input); color:var(--sf-text); border-color:var(--sf-border); }
+.form-control:focus,.form-select:focus { background:var(--sf-input); color:var(--sf-text); border-color:var(--sf-primary); box-shadow:0 0 0 .2rem rgba(75,130,240,.14); }
+.form-control::placeholder { color:var(--sf-subtle); opacity:.85; }
+html[data-sf-theme="dark"] .form-select { color-scheme:dark; }
+.auth-shell { min-height:100vh; position:relative; background:var(--sf-bg); }
+.auth-main { background: radial-gradient(circle at 20% 12%, rgba(75,121,226,.14),transparent 45%), var(--sf-bg); min-height:100vh; }
+.auth-card { background:var(--sf-surface); color:var(--sf-text); border-color:var(--sf-border); box-shadow:var(--sf-shadow); }
+.auth-logo { font-size:15px; letter-spacing:-.5px; background:linear-gradient(140deg,#3674e7,#5b91ff); }
+.auth-hint { color:var(--sf-subtle); }
+.auth-hint a { color:var(--sf-primary); }
+.auth-theme-switch { position:absolute; right:26px; top:22px; z-index:2; }
+.warning-pill { background:var(--sf-warn-bg); color:var(--sf-warn-text); }
+.ok-pill { background:var(--sf-ok-bg); color:var(--sf-ok-text); }
+.flash { background:var(--sf-ok-bg); color:var(--sf-ok-text); }
+.validation-summary { color:#f17d87; }
+html[data-sf-theme="dark"] a:not(.primary-btn):not(.subtle-btn):not(.stat-card):not(.brand):not(.text-link):not(.side-nav a):not(.side-bottom a) { color:var(--sf-info); }
+@media(max-width:1100px) { .sf-header-hint { display:none; } .topbar-actions { gap:9px; } }
+@media(max-width:900px) { .sidebar { width:68px; min-width:68px; padding:15px 5px; } .brand { margin:5px 4px 24px; } .brand span:last-child,.side-nav a span:last-child,.side-bottom { display:none; } .brand-icon { width:40px; height:40px; } .side-nav a { justify-content:center; padding:12px 0; } .sf-nav-icon { width:20px; } .topbar { padding:13px 16px; } .page-content { padding:22px 19px; } }
+@media(max-width:640px) { .theme-switch { padding:3px; gap:1px; } .theme-switch button { padding:8px; } .topbar-title { display:none; } .topbar-actions { width:100%; justify-content:space-between; } .profile { gap:5px; } .profile > span:first-child { max-width:84px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .role-pill { display:none; } .page-heading h1 { font-size:25px; } .auth-theme-switch { top:12px; right:12px; } .auth-main { padding-top:85px; } .stats-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; } .stat-card { padding:16px; min-height:130px; } .stat-card strong { font-size:29px; } }
+@media(prefers-reduced-motion:reduce) { * { scroll-behavior:auto !important; transition:none !important; } }
+'@
+$stockflowJs = @'
+/* StockFlow: three selectable themes; saved locally per browser. */
+(function () {
+  'use strict';
+  const key = 'stockflow.theme.v1';
+  const allowed = ['mixed', 'light', 'dark'];
+  function getTheme() {
+    const value = document.documentElement.getAttribute('data-sf-theme');
+    return allowed.includes(value) ? value : 'mixed';
+  }
+  function applyTheme(next) {
+    const theme = allowed.includes(next) ? next : 'mixed';
+    document.documentElement.setAttribute('data-sf-theme', theme);
+    document.querySelectorAll('[data-sf-theme-choice]').forEach(function (button) {
+      const selected = button.getAttribute('data-sf-theme-choice') === theme;
+      button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+    });
+    const names = {mixed: 'Комбінована', light: 'Світла', dark: 'Темна'};
+    document.querySelectorAll('[data-sf-theme-label]').forEach(function (node) {node.textContent = names[theme];});
+    try { localStorage.setItem(key, theme); } catch (_) { /* storage may be disabled */ }
+  }
+  document.addEventListener('click', function (event) {
+    const button = event.target.closest('[data-sf-theme-choice]');
+    if (button) applyTheme(button.getAttribute('data-sf-theme-choice'));
+  });
+  function updateNavigation() {
+    const current = window.location.pathname.replace(/\/+$/, '').toLowerCase() || '/';
+    const links = Array.from(document.querySelectorAll('.side-nav a[href]'));
+    links.forEach(function (link) {
+      const path = new URL(link.href, window.location.origin).pathname.replace(/\/+$/, '').toLowerCase() || '/';
+      const active = path === current;
+      link.classList.toggle('is-active', active);
+      if (active) link.setAttribute('aria-current', 'page');
+      else link.removeAttribute('aria-current');
+    });
+    if (!links.some(function (link) {return link.classList.contains('is-active');}) && current === '/') {
+      const first = links[0];
+      if (first) { first.classList.add('is-active'); first.setAttribute('aria-current', 'page'); }
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { applyTheme(getTheme()); updateNavigation(); });
+  } else { applyTheme(getTheme()); updateNavigation(); }
+})();
+'@
+$backupRoot = Join-Path $env:TEMP ('StockFlow-Design-Backup-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
+New-Item -ItemType Directory -Path $backupRoot -Force | Out-Null
+Copy-Item -LiteralPath $layoutPath -Destination (Join-Path $backupRoot '_Layout.cshtml')
+Copy-Item -LiteralPath $loginPath -Destination (Join-Path $backupRoot 'Login.cshtml')
+Copy-Item -LiteralPath $setupPath -Destination (Join-Path $backupRoot 'Setup.cshtml')
+try {
+    [System.IO.File]::WriteAllText($layoutPath, $layout, [System.Text.UTF8Encoding]::new($false))
+    [System.IO.File]::WriteAllText($loginPath, $login, [System.Text.UTF8Encoding]::new($false))
+    [System.IO.File]::WriteAllText($setupPath, $setup, [System.Text.UTF8Encoding]::new($false))
+    # Standalone theme assets - no source business logic edited.
+    New-Item -ItemType Directory -Path (Split-Path $themeCss -Parent) -Force | Out-Null
+    New-Item -ItemType Directory -Path (Split-Path $themeJs -Parent) -Force | Out-Null
+    [System.IO.File]::WriteAllText($themeCss, $stockflowCss, [System.Text.UTF8Encoding]::new($false))
+    [System.IO.File]::WriteAllText($themeJs, $stockflowJs, [System.Text.UTF8Encoding]::new($false))
+} catch {
+    Copy-Item -LiteralPath (Join-Path $backupRoot '_Layout.cshtml') -Destination $layoutPath -Force
+    Copy-Item -LiteralPath (Join-Path $backupRoot 'Login.cshtml') -Destination $loginPath -Force
+    Copy-Item -LiteralPath (Join-Path $backupRoot 'Setup.cshtml') -Destination $setupPath -Force
+    Remove-Item -LiteralPath $themeCss,$themeJs -ErrorAction SilentlyContinue
+    throw
+}
+Write-Host ''
+Write-Host 'StockFlow installed: brand, mixed/light/dark themes, and saved preference.' -ForegroundColor Green
+Write-Host ('Backup: ' + $backupRoot) -ForegroundColor DarkGray
+Write-Host 'NEXT: Ctrl+Shift+B, run Web, refresh browser with Ctrl+F5.' -ForegroundColor Cyan
+Write-Host 'No MongoDB records, accounts, roles or API code were changed.'

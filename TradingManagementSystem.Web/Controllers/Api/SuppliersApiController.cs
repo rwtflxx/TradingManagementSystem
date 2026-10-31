@@ -18,6 +18,7 @@ public class SuppliersApiController : ControllerBase
         _context = context;
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager,TradingPointManager")]
     [HttpGet]
     public async Task<ActionResult<List<Supplier>>> GetAll()
     {
@@ -28,6 +29,7 @@ public class SuppliersApiController : ControllerBase
         return Ok(suppliers);
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager,TradingPointManager")]
     [HttpGet("{id}")]
     public async Task<ActionResult<Supplier>> GetById(string id)
     {
@@ -43,6 +45,7 @@ public class SuppliersApiController : ControllerBase
         return Ok(supplier);
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager")]
     [HttpPost]
     public async Task<ActionResult<Supplier>> Create(
         CreateSupplierRequest request)
@@ -73,6 +76,7 @@ public class SuppliersApiController : ControllerBase
             supplier);
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager")]
     [HttpPut("{id}")]
     public async Task<ActionResult<Supplier>> Update(
         string id,
@@ -107,6 +111,7 @@ public class SuppliersApiController : ControllerBase
         return Ok(supplier);
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id)
     {
@@ -131,3 +136,4 @@ public class SuppliersApiController : ControllerBase
         return NoContent();
     }
 }
+
