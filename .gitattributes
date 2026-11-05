@@ -62,3 +62,9 @@
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
 *.ps1 linguist-vendored
+
+# GitHub language statistics
+*.cshtml -linguist-detectable
+CoverageReport/** linguist-generated
+CoverageReport-Web/** linguist-generated
+TradingManagementSystem.Web/wwwroot/lib/** linguist-vendored
