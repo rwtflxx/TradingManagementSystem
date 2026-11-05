@@ -1,0 +1,37 @@
+Summary
+  Generated on: 05.11.2026 - 18:32:32
+  Coverage date: 05.11.2026 - 18:29:41
+  Parser: Cobertura
+  Assemblies: 2
+  Classes: 13
+  Files: 13
+  Line coverage: 100%
+  Covered lines: 269
+  Uncovered lines: 0
+  Coverable lines: 269
+  Total lines: 624
+  Branch coverage: 98.8% (87 of 88)
+  Covered branches: 87
+  Total branches: 88
+  Method coverage: 100% (27 of 27)
+  Full method coverage: 100% (27 of 27)
+  Covered methods: 27
+  Fully covered methods: 27
+  Total methods: 27
+
+TradingManagementSystem.Application                                     100%
+  TradingManagementSystem.Application.Services.InventoryService         100%
+  TradingManagementSystem.Application.Services.ReceiptService           100%
+  TradingManagementSystem.Application.Services.SaleService              100%
+  TradingManagementSystem.Application.Services.SmartInventoryService    100%
+
+TradingManagementSystem.Domain                                          100%
+  TradingManagementSystem.Domain.Entities.Employee                      100%
+  TradingManagementSystem.Domain.Entities.InventoryItem                 100%
+  TradingManagementSystem.Domain.Entities.Product                       100%
+  TradingManagementSystem.Domain.Entities.Purchase                      100%
+  TradingManagementSystem.Domain.Entities.PurchaseItem                  100%
+  TradingManagementSystem.Domain.Entities.Receipt                       100%
+  TradingManagementSystem.Domain.Entities.Sale                          100%
+  TradingManagementSystem.Domain.Entities.SaleItem                      100%
+  TradingManagementSystem.Domain.Entities.Supplier                      100%

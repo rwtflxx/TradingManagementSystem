@@ -1,0 +1,32 @@
+STOCKFLOW - KPZ LABORATORY WORK No.4: UNIT TESTING + COVERAGE
+
+WHAT IS COVERED
+- Domain models: products, suppliers, inventory, receipts, purchases, sales, employees.
+- Application: inventory, receipt, sale services.
+- SmartInventoryService: low stock, forecasts, sales history, transfer proposals.
+- Coverage report target: Domain + Application projects. It does NOT claim coverage of the entire Web project.
+
+HOW TO INSTALL
+1. Stop Visual Studio application, but keep Visual Studio open.
+2. Copy Install-StockFlow-Lab4-Complete.ps1 into repository root alongside TradingManagementSystem.slnx.
+3. In Visual Studio terminal run:
+   powershell -NoProfile -ExecutionPolicy Bypass -File ".\Install-StockFlow-Lab4-Complete.ps1"
+4. Build solution (Ctrl + Shift + B).
+
+HOW TO TEST
+Run in the same terminal:
+   powershell -NoProfile -ExecutionPolicy Bypass -File ".\Measure-StockFlow-Coverage.ps1"
+
+The tool runs dotnet test with xUnit + Coverlet. It prints line and branch percentages.
+Save a screenshot showing Passed/Failed and LINE COVERAGE, and send it to ChatGPT.
+
+If NuGet packages cannot be restored, share the complete error output.
+If test failures appear, do not remove them merely to boost coverage: we need to fix the code or assertions.
+Don't add TestResults or other generated coverage artifacts to GitHub.
+
+Installer safety
+- Checks file hashes for the old known versions of InventoryItem.cs and SaleService.cs.
+- Only applies two verified business-rule fixes if matching the original versions.
+- Refuses unexpected files instead of overwriting your work.
+- Creates backup of the modified source/solution files under Windows TEMP.
+- Does not access MongoDB or change existing business data.

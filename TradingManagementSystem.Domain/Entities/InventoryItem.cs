@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -46,6 +46,6 @@ public class InventoryItem
 
     public bool HasEnough(int quantity)
     {
-        return Quantity >= quantity;
+        return quantity > 0 && Quantity >= quantity;
     }
 }

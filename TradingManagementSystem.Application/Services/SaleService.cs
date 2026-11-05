@@ -1,4 +1,5 @@
-﻿using System;
+using System.Linq;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -25,36 +26,56 @@ public class SaleService
                 "Sale has already been completed.");
         }
 
-        foreach (var saleItem in sale.Items)
+        // Validate the entire sale before changing any inventory quantities.
+        if (sale.Items.Count == 0)
         {
-            var inventoryItem = inventoryItems.FirstOrDefault(
-                i => i.ProductId == saleItem.ProductId &&
-                     i.TradingPointId == sale.TradingPointId);
-
-            if (inventoryItem == null)
-            {
-                throw new InvalidOperationException(
-                    "Inventory item was not found.");
-            }
-
-            if (!_inventoryService.HasEnoughStock(
-                    inventoryItem,
-                    saleItem.Quantity))
-            {
-                throw new InvalidOperationException(
-                    "Not enough products in stock.");
-            }
+            throw new InvalidOperationException("Sale must contain at least one item.");
         }
 
         foreach (var saleItem in sale.Items)
         {
-            var inventoryItem = inventoryItems.First(
-                i => i.ProductId == saleItem.ProductId &&
+            if (saleItem.Quantity <= 0)
+            {
+                throw new InvalidOperationException("Sale item quantity must be greater than zero.");
+            }
+        }
+
+        // A product can appear on several lines: check its COMBINED demand.
+        var requested = sale.Items
+            .GroupBy(item => item.ProductId)
+            .Select(group => new
+            {
+                ProductId = group.Key,
+                Quantity = group.Sum(item => (long)item.Quantity)
+            })
+            .ToList();
+
+        foreach (var request in requested)
+        {
+            var inventoryItem = inventoryItems.FirstOrDefault(
+                i => i.ProductId == request.ProductId &&
                      i.TradingPointId == sale.TradingPointId);
 
-            _inventoryService.DecreaseStock(
-                inventoryItem,
-                saleItem.Quantity);
+            if (inventoryItem == null)
+            {
+                throw new InvalidOperationException("Inventory item was not found.");
+            }
+
+            if (request.Quantity > int.MaxValue ||
+                !_inventoryService.HasEnoughStock(inventoryItem, (int)request.Quantity))
+            {
+                throw new InvalidOperationException("Not enough products in stock.");
+            }
+        }
+
+        // Only after every product has been validated do we change stock.
+        foreach (var request in requested)
+        {
+            var inventoryItem = inventoryItems.First(
+                i => i.ProductId == request.ProductId &&
+                     i.TradingPointId == sale.TradingPointId);
+
+            _inventoryService.DecreaseStock(inventoryItem, (int)request.Quantity);
         }
 
         sale.Complete();
