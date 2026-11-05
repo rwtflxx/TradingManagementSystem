@@ -1,0 +1,22 @@
+@model TradingManagementSystem.Web.Models.EmployeeEditPage
+@{ ViewData["Title"] = "Редагування працівника"; }
+<div class="page-heading"><div><span class="eyebrow">ПРАЦІВНИКИ</span><h1>Редагувати працівника</h1><p>Роль залишається незмінною: @Model.Role</p></div></div>
+<div class="content-card narrow">
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+    <div asp-validation-summary="All" class="validation-summary" role="alert"></div>
+    <label asp-for="Details.FirstName">Ім'я</label><input asp-for="Details.FirstName" class="form-control" required />
+    <label asp-for="Details.LastName">Прізвище</label><input asp-for="Details.LastName" class="form-control" required />
+    <label asp-for="Details.Login">Логін</label><input asp-for="Details.Login" class="form-control" required />
+    @if (Model.CanChoosePoint)
+    {
+        <label asp-for="Details.TradingPointId">Торгова точка</label>
+        <select asp-for="Details.TradingPointId" class="form-select">
+            <option value="">Обери торгову точку</option>
+            @foreach (var point in Model.TradingPoints) { <option value="@point.Id">@point.Name</option> }
+        </select>
+    }
+    <p class="sf-field-note">Зміна логіна вплине на наступний вхід. Зміна торгової точки завершить поточну сесію працівника.</p>
+    <button type="submit" class="primary-btn mt-3">Зберегти зміни</button>
+    <a asp-action="Index" class="subtle-btn ms-2">Назад</a>
+</form>
+</div>

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace TradingManagementSystem.Web.Models;
 
@@ -30,6 +30,8 @@ public class EmployeeInput
 
     [Required]
     public TradingManagementSystem.Domain.Enums.EmployeeRole Role { get; set; }
+
+    public string? TradingPointId { get; set; }
 }
 
 public class PasswordChangeInput

@@ -1,52 +1,129 @@
 @model TradingManagementSystem.Web.Controllers.DashboardStats
-@{ ViewData["Title"] = "Головна"; }
+@{
+    ViewData["Title"] = "Головна";
+    var director = User.IsInRole("Director");
+    var pointManager = User.IsInRole("TradingPointManager");
+    var supplyManager = User.IsInRole("SupplyManager");
+    var seller = User.IsInRole("Seller");
+    var roleTitle = director ? "Панель директора" : pointManager ? "Панель завідувача" : supplyManager ? "Панель постачання" : "Робоче місце продавця";
+    var roleDescription = director ? "Показники всієї торгової організації."
+        : pointManager ? "Продажі, склад і працівники твоєї торгової точки."
+        : supplyManager ? "Товари, постачальники та робота із закупівлями."
+        : "Доступні товари й власні продажі у твоєму магазині.";
+}
 <div class="sf-dashboard-intro">
-    <div>
-        <span class="eyebrow">ОГЛЯД СИСТЕМИ</span>
-        <h1>Панель керування</h1>
-        <p>Усі ключові показники торгової організації — в одному місці.</p>
-    </div>
-    <span class="sf-live-chip"><span class="sf-live-dot"></span> Дані з MongoDB</span>
+  <div>
+    <span class="eyebrow">ОГЛЯД СИСТЕМИ</span>
+    <h1>@roleTitle</h1>
+    <p>@roleDescription</p>
+  </div>
+  <span class="sf-live-chip"><span class="sf-live-dot"></span> Дані з MongoDB</span>
 </div>
 <div class="stats-grid">
-    <a class="stat-card sf-stat-products" asp-controller="Catalog" asp-action="Products">
-        <span class="sf-stat-top"><span>Товари</span><span class="sf-stat-icon" aria-hidden="true">▣</span></span>
-        <strong>@Model.Products</strong><small>У каталозі продукції</small><span class="sf-stat-more">Переглянути каталог →</span>
-    </a>
+  <a class="stat-card sf-stat-products" asp-controller="Catalog" asp-action="Products">
+    <span class="sf-stat-top"><span>@(seller ? "Доступні товари" : "Товари")</span><span class="sf-stat-icon" aria-hidden="true">▣</span></span>
+    <strong>@Model.Products</strong><small>@(seller ? "Товари в наявності" : "Позиції каталогу")</small><span class="sf-stat-more">Переглянути товари →</span>
+  </a>
+  @if (director || supplyManager)
+  {
     <a class="stat-card sf-stat-stores" asp-controller="Catalog" asp-action="TradingPoints">
-        <span class="sf-stat-top"><span>Торгові точки</span><span class="sf-stat-icon" aria-hidden="true">⌂</span></span>
-        <strong>@Model.TradingPoints</strong><small>Філії та магазини</small><span class="sf-stat-more">Переглянути точки →</span>
+      <span class="sf-stat-top"><span>Торгові точки</span><span class="sf-stat-icon" aria-hidden="true">⌂</span></span>
+      <strong>@Model.TradingPoints</strong><small>Магазини організації</small><span class="sf-stat-more">Переглянути точки →</span>
     </a>
+  }
+  else if (pointManager)
+  {
+    <a class="stat-card sf-stat-stores" asp-controller="Employees" asp-action="Index">
+      <span class="sf-stat-top"><span>Мої продавці</span><span class="sf-stat-icon" aria-hidden="true">♙</span></span>
+      <strong>@Model.Employees</strong><small>Працівники твоєї точки</small><span class="sf-stat-more">Керувати продавцями →</span>
+    </a>
+  }
+  else
+  {
+    <a class="stat-card sf-stat-stores" asp-controller="Catalog" asp-action="TradingPoints">
+      <span class="sf-stat-top"><span>Мій магазин</span><span class="sf-stat-icon" aria-hidden="true">⌂</span></span>
+      <strong>@Model.TradingPoints</strong><small>Призначена торгова точка</small><span class="sf-stat-more">Переглянути точку →</span>
+    </a>
+  }
+  @if (supplyManager)
+  {
+    <a class="stat-card sf-stat-alerts" asp-controller="Catalog" asp-action="Purchases">
+      <span class="sf-stat-top"><span>Закупівлі</span><span class="sf-stat-icon" aria-hidden="true">▤</span></span>
+      <strong>@Model.Purchases</strong><small>Замовлення постачальникам</small><span class="sf-stat-more">Відкрити закупівлі →</span>
+    </a>
+  }
+  else if (seller)
+  {
     <a class="stat-card sf-stat-alerts" asp-controller="Catalog" asp-action="Inventory">
-        <span class="sf-stat-top"><span>Низькі залишки</span><span class="sf-stat-icon" aria-hidden="true">!</span></span>
-        <strong class="accent-number">@Model.LowStock</strong><small>Позиції, що потребують уваги</small><span class="sf-stat-more">Переглянути залишки →</span>
+      <span class="sf-stat-top"><span>Залишки магазину</span><span class="sf-stat-icon" aria-hidden="true">▥</span></span>
+      <strong>Перегляд</strong><small>Доступність товарів</small><span class="sf-stat-more">Переглянути склад →</span>
     </a>
+  }
+  else
+  {
+    <a class="stat-card sf-stat-alerts" asp-controller="Catalog" asp-action="Inventory">
+      <span class="sf-stat-top"><span>Низькі залишки</span><span class="sf-stat-icon" aria-hidden="true">!</span></span>
+      <strong class="accent-number">@Model.LowStock</strong><small>Товари, які потребують уваги</small><span class="sf-stat-more">Переглянути залишки →</span>
+    </a>
+  }
+  @if (supplyManager)
+  {
+    <a class="stat-card sf-stat-sales" asp-controller="Catalog" asp-action="Suppliers">
+      <span class="sf-stat-top"><span>Постачальники</span><span class="sf-stat-icon" aria-hidden="true">◇</span></span>
+      <strong>@Model.Suppliers</strong><small>Контакти постачальників</small><span class="sf-stat-more">Відкрити список →</span>
+    </a>
+  }
+  else
+  {
     <a class="stat-card sf-stat-sales" asp-controller="Catalog" asp-action="Sales">
-        <span class="sf-stat-top"><span>Продажі</span><span class="sf-stat-icon" aria-hidden="true">↗</span></span>
-        <strong>@Model.Sales</strong><small>Зареєстровані операції</small><span class="sf-stat-more">Історія продажів →</span>
+      <span class="sf-stat-top"><span>@(seller ? "Мої продажі" : "Продажі")</span><span class="sf-stat-icon" aria-hidden="true">↗</span></span>
+      <strong>@Model.Sales</strong><small>@(seller ? "Оформлені мною" : pointManager ? "Продажі моєї точки" : "Продажі організації")</small><span class="sf-stat-more">Відкрити історію →</span>
     </a>
+  }
 </div>
 <div class="panel-grid sf-dashboard-panels">
-    <section class="content-card sf-operations-panel">
-        <span class="eyebrow">ОСНОВНИЙ ПРОЦЕС</span>
-        <h2>Як працює StockFlow</h2>
-        <p>Закупівля фіксує замовлення, надходження додає товар на склад, а продаж автоматично списує його із залишків.</p>
-        <div class="sf-process-steps">
-            <div class="sf-process-step"><span>01</span><strong>Закупівля</strong><small>Створення замовлення</small></div>
-            <div class="sf-process-step"><span>02</span><strong>Надходження</strong><small>Оприбуткування товару</small></div>
-            <div class="sf-process-step"><span>03</span><strong>Продаж</strong><small>Оновлення залишку</small></div>
-        </div>
-    </section>
-    <section class="content-card sf-upcoming-panel">
-        <span class="eyebrow">МОЖЛИВОСТІ СИСТЕМИ</span>
-        <h2>Керування торговою організацією</h2>
-        <p>Товари, постачальники, торгові точки та облік операцій доступні в єдиному робочому просторі.</p>
-        <div class="sf-feature-list">
-            <div><span class="sf-feature-dot"></span> Облік закупівель і надходжень</div>
-            <div><span class="sf-feature-dot"></span> Реєстрація продажів</div>
-            <div><span class="sf-feature-dot"></span> Контроль товарних залишків</div>
-        </div>
-        <p class="note">Вебформи торгових операцій та Smart Inventory ще розробляються. API доступне в Swagger.</p>
-        <a class="text-link" href="/swagger">Відкрити Swagger →</a>
-    </section>
+  <section class="content-card sf-operations-panel">
+    <span class="eyebrow">ТВОЯ РОЛЬ</span>
+    <h2>@(director ? "Контроль організації" : pointManager ? "Керування магазином" : supplyManager ? "Організація постачання" : "Оформлення продажів")</h2>
+    <p>@(director ? "Контролюй показники організації, працівників і торгові точки. Операційні закупівлі та продажі оформляють відповідальні працівники."
+       : pointManager ? "Переглядай показники своєї точки та керуй її продавцями. Для закупівель звертайся до менеджера із постачання."
+       : supplyManager ? "Керуй товарами та постачальниками, оформляй закупівлі, реєструй надходження й стеж за залишками."
+       : "Знаходь товари в наявності, перевіряй кількість і оформлюй продажі лише у своєму магазині.")</p>
+    <div class="sf-process-steps">
+      @if (director)
+      {
+        <div class="sf-process-step"><span>01</span><strong>Торгові точки</strong><small>Організація</small></div>
+        <div class="sf-process-step"><span>02</span><strong>Працівники</strong><small>Керування</small></div>
+        <div class="sf-process-step"><span>03</span><strong>Звіти</strong><small>Контроль</small></div>
+      }
+      else if (pointManager)
+      {
+        <div class="sf-process-step"><span>01</span><strong>Продавці</strong><small>Команда</small></div>
+        <div class="sf-process-step"><span>02</span><strong>Продажі</strong><small>Результати</small></div>
+        <div class="sf-process-step"><span>03</span><strong>Залишки</strong><small>Контроль</small></div>
+      }
+      else if (supplyManager)
+      {
+        <div class="sf-process-step"><span>01</span><strong>Закупівля</strong><small>Замовлення</small></div>
+        <div class="sf-process-step"><span>02</span><strong>Надходження</strong><small>Отримання</small></div>
+        <div class="sf-process-step"><span>03</span><strong>Залишки</strong><small>Поповнення</small></div>
+      }
+      else
+      {
+        <div class="sf-process-step"><span>01</span><strong>Товари</strong><small>Пошук</small></div>
+        <div class="sf-process-step"><span>02</span><strong>Продаж</strong><small>Оформлення</small></div>
+        <div class="sf-process-step"><span>03</span><strong>Історія</strong><small>Перевірка</small></div>
+      }
+    </div>
+  </section>
+  <section class="content-card sf-upcoming-panel">
+    <span class="eyebrow">РОБОЧІ ІНСТРУМЕНТИ</span>
+    <h2>Торгові операції та аналітика</h2>
+    <p>Закупівлі, надходження й продажі оформлюються через вебформи. Smart Inventory пропонує поповнення та переміщення запасів.</p>
+    <div class="sf-feature-list">
+      <div><span class="sf-feature-dot"></span> Закупівлі та надходження через вебінтерфейс</div>
+      <div><span class="sf-feature-dot"></span> Продажі через зручний кошик</div>
+      @if (!seller) { <div><span class="sf-feature-dot"></span> <a asp-controller="SmartInventory" asp-action="Index">Smart Inventory та рекомендації</a></div> }
+    </div>
+  </section>
 </div>

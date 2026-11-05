@@ -92,7 +92,8 @@ public class ProfileController : Controller
         {
             new Claim(ClaimTypes.NameIdentifier, employee.Id),
             new Claim(ClaimTypes.Name, first + " " + last),
-            new Claim(ClaimTypes.Role, employee.Role.ToString())
+            new Claim(ClaimTypes.Role, employee.Role.ToString()),
+            new Claim("sf.point", employee.TradingPointId ?? string.Empty)
         };
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
             new ClaimsPrincipal(new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme)),

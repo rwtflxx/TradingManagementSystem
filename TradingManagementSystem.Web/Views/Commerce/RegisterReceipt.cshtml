@@ -1,0 +1,16 @@
+@model TradingManagementSystem.Web.Models.ReceiptFormModel
+@using TradingManagementSystem.Domain.Entities
+@{ ViewData["Title"] = "Реєстрація надходження"; var purchases = (List<Purchase>)ViewBag.Purchases; }
+<div class="page-heading"><div><span class="eyebrow">СКЛАД</span><h1>Зареєструвати надходження</h1><p>Вибери отриману закупівлю. Після підтвердження запаси збільшаться.</p></div></div>
+@if (ViewBag.Error is string err) { <div class="sf-form-error" role="alert">@err</div> }
+<form method="post" asp-antiforgery="true" asp-controller="Commerce" asp-action="RegisterReceipt" class="content-card sf-business-form" style="max-width:840px">
+ 
+ <label for="purchase">Закупівля</label>
+ <select id="purchase" name="PurchaseId" class="form-select" required>
+   <option value="">— Обери закупівлю —</option>
+   @foreach (var p in purchases)
+   { <option value="@p.Id" selected="@(Model.PurchaseId == p.Id)">@(p.Id.Length > 8 ? p.Id.Substring(0, 8) : p.Id) · @p.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy") · @p.Items.Count позицій · @p.TotalAmount.ToString("0.00") грн</option> }
+ </select>
+ <p class="sf-hint">Одну закупівлю можна оприбуткувати лише один раз. Форма реєструє всі її позиції.</p>
+ <div class="sf-form-actions"><button type="submit" class="primary-btn" onclick="return confirm('Підтвердити фактичне отримання товару?')">Підтвердити надходження</button><a class="subtle-btn" asp-controller="Catalog" asp-action="Receipts">Скасувати</a></div>
+</form>

@@ -1,8 +1,9 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using TradingManagementSystem.Domain.Entities;
+using TradingManagementSystem.Domain.Enums;
 using TradingManagementSystem.Infrastructure.Data;
 
 namespace TradingManagementSystem.Web.Controllers;
@@ -12,10 +13,21 @@ public class CatalogController : Controller
     private readonly MongoDbContext _db;
     public CatalogController(MongoDbContext db) => _db = db;
 
-    public async Task<IActionResult> Products() =>
-        View(await _db.Products.Find(_ => true).ToListAsync());
+    public async Task<IActionResult> Products()
+    {
+        var actor = await CurrentEmployeeAsync();
+        if (actor == null) return Unauthorized();
+        if (actor.Role == EmployeeRole.Seller)
+        {
+            if (string.IsNullOrWhiteSpace(actor.TradingPointId)) return Forbid();
+            var stock = await _db.InventoryItems.Find(i => i.TradingPointId == actor.TradingPointId && i.Quantity > 0).ToListAsync();
+            var ids = stock.Select(i => i.ProductId).Distinct().ToList();
+            return View(await _db.Products.Find(Builders<Product>.Filter.In(p => p.Id, ids)).ToListAsync());
+        }
+        return View(await _db.Products.Find(_ => true).ToListAsync());
+    }
 
-    [Authorize(Roles = "Director,SupplyManager")]
+    [Authorize(Roles = "SupplyManager")]
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> AddProduct(string name, string sku, string category, decimal sellingPrice, string description)
     {
@@ -36,11 +48,11 @@ public class CatalogController : Controller
         return RedirectToAction(nameof(Products));
     }
 
-    [Authorize(Roles = "Director,SupplyManager,TradingPointManager")]
+    [Authorize(Roles = "Director,SupplyManager")]
     public async Task<IActionResult> Suppliers() =>
         View(await _db.Suppliers.Find(_ => true).ToListAsync());
 
-    [Authorize(Roles = "Director,SupplyManager")]
+    [Authorize(Roles = "SupplyManager")]
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> AddSupplier(string name, string phone, string email, string address)
     {
@@ -56,8 +68,15 @@ public class CatalogController : Controller
         return RedirectToAction(nameof(Suppliers));
     }
 
-    public async Task<IActionResult> TradingPoints() =>
-        View(await _db.TradingPoints.Find(_ => true).ToListAsync());
+    public async Task<IActionResult> TradingPoints()
+    {
+        var employee = await CurrentEmployeeAsync();
+        if (employee == null) return Unauthorized();
+        var filter = employee.Role == EmployeeRole.Seller || employee.Role == EmployeeRole.TradingPointManager
+            ? Builders<TradingPoint>.Filter.Eq(p => p.Id, employee.TradingPointId)
+            : Builders<TradingPoint>.Filter.Empty;
+        return View(await _db.TradingPoints.Find(filter).ToListAsync());
+    }
 
     [Authorize(Roles = "Director")]
     [HttpPost, ValidateAntiForgeryToken]
@@ -76,9 +95,16 @@ public class CatalogController : Controller
         return RedirectToAction(nameof(TradingPoints));
     }
 
-    [Authorize(Roles = "Director,SupplyManager")]
-    public async Task<IActionResult> Purchases() =>
-        View(await _db.Purchases.Find(_ => true).ToListAsync());
+    [Authorize(Roles = "Director,SupplyManager,TradingPointManager")]
+    public async Task<IActionResult> Purchases()
+    {
+        var actor = await CurrentEmployeeAsync();
+        if (actor == null) return Unauthorized();
+        var filter = actor.Role == EmployeeRole.TradingPointManager
+            ? Builders<Purchase>.Filter.Eq(p => p.TradingPointId, actor.TradingPointId)
+            : Builders<Purchase>.Filter.Empty;
+        return View(await _db.Purchases.Find(filter).ToListAsync());
+    }
 
     [Authorize(Roles = "Director,SupplyManager")]
     public async Task<IActionResult> Receipts() =>
@@ -88,12 +114,30 @@ public class CatalogController : Controller
     public async Task<IActionResult> Sales()
     {
         var sellerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var employee = await CurrentEmployeeAsync();
+        if (employee == null) return Unauthorized();
         var filter = User.IsInRole("Seller")
             ? Builders<Sale>.Filter.Eq(x => x.SellerId, sellerId)
-            : Builders<Sale>.Filter.Empty;
+            : User.IsInRole("TradingPointManager")
+                ? Builders<Sale>.Filter.Eq(x => x.TradingPointId, employee.TradingPointId)
+                : Builders<Sale>.Filter.Empty;
         return View(await _db.Sales.Find(filter).ToListAsync());
     }
 
-    public async Task<IActionResult> Inventory() =>
-        View(await _db.InventoryItems.Find(_ => true).ToListAsync());
+    public async Task<IActionResult> Inventory()
+    {
+        var employee = await CurrentEmployeeAsync();
+        if (employee == null) return Unauthorized();
+        var filter = employee.Role == EmployeeRole.Seller || employee.Role == EmployeeRole.TradingPointManager
+            ? Builders<InventoryItem>.Filter.Eq(i => i.TradingPointId, employee.TradingPointId)
+            : Builders<InventoryItem>.Filter.Empty;
+        return View(await _db.InventoryItems.Find(filter).ToListAsync());
+    }
+
+    private async Task<Employee?> CurrentEmployeeAsync()
+    {
+        var id = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(id)) return null;
+        return await _db.Employees.Find(e => e.Id == id && e.IsActive).FirstOrDefaultAsync();
+    }
 }

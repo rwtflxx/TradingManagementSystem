@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using TradingManagementSystem.Domain.Enums;
 using MongoDB.Driver;
 using TradingManagementSystem.Application.Services;
 using TradingManagementSystem.Domain.Entities;
-using TradingManagementSystem.Domain.Enums;
 using TradingManagementSystem.Infrastructure.Data;
 
 namespace TradingManagementSystem.Web.Controllers.Api;
@@ -24,7 +25,15 @@ public class SalesApiController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var salesFilter = User.IsInRole("Seller") ? Builders<Sale>.Filter.Eq(s => s.SellerId, User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value) : Builders<Sale>.Filter.Empty; var sales = await _context.Sales.Find(salesFilter).ToListAsync();
+        var actor = await CurrentAsync();
+        if (actor == null) return Unauthorized();
+        var salesFilter = actor.Role switch
+        {
+            EmployeeRole.Seller => Builders<Sale>.Filter.Eq(s => s.SellerId, actor.Id),
+            EmployeeRole.TradingPointManager => Builders<Sale>.Filter.Eq(s => s.TradingPointId, actor.TradingPointId),
+            _ => Builders<Sale>.Filter.Empty
+        };
+        var sales = await _context.Sales.Find(salesFilter).ToListAsync();
         return Ok(sales);
     }
 
@@ -32,21 +41,29 @@ public class SalesApiController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(string id)
     {
+        var actor = await CurrentAsync();
+        if (actor == null) return Unauthorized();
         var sale = await _context.Sales.Find(s => s.Id == id).FirstOrDefaultAsync();
-        return sale == null ? NotFound() : (User.IsInRole("Seller") && sale.SellerId != User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ? Forbid() : Ok(sale));
+        if (sale == null) return NotFound();
+        if (actor.Role == EmployeeRole.Seller && sale.SellerId != actor.Id) return NotFound();
+        if (actor.Role == EmployeeRole.TradingPointManager && sale.TradingPointId != actor.TradingPointId) return NotFound();
+        return Ok(sale);
     }
 
-    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,TradingPointManager,Seller")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Seller")]
     [HttpPost]
     public async Task<IActionResult> Create(CreateSaleRequest request)
     {
+        var actor = await CurrentAsync();
+        if (actor == null || actor.Role != EmployeeRole.Seller) return Forbid();
+        if (string.IsNullOrWhiteSpace(actor.TradingPointId) || request.TradingPointId != actor.TradingPointId)
+            return Forbid();
         // A client-generated request ID helps prevent accidental repeated sales.
         if (!Guid.TryParse(request.RequestId, out _))
             return BadRequest("RequestId must be a valid GUID.");
 
-        if (
-            string.IsNullOrWhiteSpace(request.TradingPointId))
-            return BadRequest("SellerId and TradingPointId are required.");
+        if (string.IsNullOrWhiteSpace(request.TradingPointId))
+            return BadRequest("TradingPointId is required.");
 
         if (!Enum.IsDefined(request.PaymentMethod))
             return BadRequest("Invalid payment method. Use 0 (Cash) or 1 (Card).");
@@ -68,7 +85,7 @@ public class SalesApiController : ControllerBase
         var sale = new Sale
         {
             Id = request.RequestId,
-            SellerId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty,
+            SellerId = actor.Id, // Never trust a caller-supplied seller ID.
             TradingPointId = request.TradingPointId,
             PaymentMethod = request.PaymentMethod
         };
@@ -150,6 +167,13 @@ public class SalesApiController : ControllerBase
         }
 
         return CreatedAtAction(nameof(GetById), new { id = sale.Id }, sale);
+    }
+
+    private async Task<Employee?> CurrentAsync()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return null;
+        return await _context.Employees.Find(e => e.Id == userId && e.IsActive).FirstOrDefaultAsync();
     }
 
     private async Task RestoreStockAsync(List<(string InventoryId, int Quantity)> applied)

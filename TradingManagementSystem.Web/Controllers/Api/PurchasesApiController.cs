@@ -1,5 +1,7 @@
-﻿
+
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using TradingManagementSystem.Domain.Enums;
 using MongoDB.Driver;
 using TradingManagementSystem.Domain.Entities;
 using TradingManagementSystem.Infrastructure.Data;
@@ -17,32 +19,47 @@ public class PurchasesApiController : ControllerBase
         _context = context;
     }
 
-    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager,TradingPointManager")]
     [HttpGet]
     public async Task<ActionResult<List<Purchase>>> GetAll()
     {
+        var actor = await CurrentAsync();
+        if (actor == null) return Unauthorized();
+        var filter = actor.Role == EmployeeRole.TradingPointManager
+            ? Builders<Purchase>.Filter.Eq(p => p.TradingPointId, actor.TradingPointId)
+            : Builders<Purchase>.Filter.Empty;
         var purchases = await _context.Purchases
-            .Find(_ => true)
+            .Find(filter)
             .ToListAsync();
 
         return Ok(purchases);
     }
 
-    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager,TradingPointManager")]
     [HttpGet("{id}")]
     public async Task<ActionResult<Purchase>> GetById(string id)
     {
+        var actor = await CurrentAsync();
+        if (actor == null) return Unauthorized();
         var purchase = await _context.Purchases
             .Find(p => p.Id == id)
             .FirstOrDefaultAsync();
 
-        if (purchase == null)
+        if (purchase == null ||
+            (actor.Role == EmployeeRole.TradingPointManager && purchase.TradingPointId != actor.TradingPointId))
             return NotFound();
 
         return Ok(purchase);
     }
 
-    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager")]
+    private async Task<Employee?> CurrentAsync()
+    {
+        var id = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(id)) return null;
+        return await _context.Employees.Find(x => x.Id == id && x.IsActive).FirstOrDefaultAsync();
+    }
+
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SupplyManager")]
     [HttpPost]
     public async Task<ActionResult<Purchase>> Create(
         CreatePurchaseRequest request)

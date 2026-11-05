@@ -1,5 +1,7 @@
-﻿
+
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using TradingManagementSystem.Domain.Enums;
 using MongoDB.Driver;
 using TradingManagementSystem.Domain.Entities;
 using TradingManagementSystem.Infrastructure.Data;
@@ -17,12 +19,22 @@ public class TradingPointsApiController : ControllerBase
         _context = context;
     }
 
+    private async Task<Employee?> CurrentAsync()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return null;
+        return await _context.Employees.Find(e => e.Id == userId && e.IsActive).FirstOrDefaultAsync();
+    }
+
     [HttpGet]
     public async Task<ActionResult<List<TradingPoint>>> GetAll()
     {
-        var points = await _context.TradingPoints
-            .Find(_ => true)
-            .ToListAsync();
+        var actor = await CurrentAsync();
+        if (actor == null) return Unauthorized();
+        var filter = actor.Role == EmployeeRole.Seller || actor.Role == EmployeeRole.TradingPointManager
+            ? Builders<TradingPoint>.Filter.Eq(p => p.Id, actor.TradingPointId)
+            : Builders<TradingPoint>.Filter.Empty;
+        var points = await _context.TradingPoints.Find(filter).ToListAsync();
 
         return Ok(points);
     }
@@ -30,9 +42,11 @@ public class TradingPointsApiController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<TradingPoint>> GetById(string id)
     {
-        var point = await _context.TradingPoints
-            .Find(p => p.Id == id)
-            .FirstOrDefaultAsync();
+        var actor = await CurrentAsync();
+        if (actor == null) return Unauthorized();
+        if ((actor.Role == EmployeeRole.Seller || actor.Role == EmployeeRole.TradingPointManager) && actor.TradingPointId != id)
+            return NotFound();
+        var point = await _context.TradingPoints.Find(p => p.Id == id).FirstOrDefaultAsync();
 
         if (point == null)
             return NotFound();
@@ -76,9 +90,11 @@ public class TradingPointsApiController : ControllerBase
             string.IsNullOrWhiteSpace(request.Address))
             return BadRequest("Name and address are required.");
 
-        var point = await _context.TradingPoints
-            .Find(p => p.Id == id)
-            .FirstOrDefaultAsync();
+        var actor = await CurrentAsync();
+        if (actor == null) return Unauthorized();
+        if ((actor.Role == EmployeeRole.Seller || actor.Role == EmployeeRole.TradingPointManager) && actor.TradingPointId != id)
+            return NotFound();
+        var point = await _context.TradingPoints.Find(p => p.Id == id).FirstOrDefaultAsync();
 
         if (point == null)
             return NotFound();
@@ -108,9 +124,11 @@ public class TradingPointsApiController : ControllerBase
             .Find(s => s.TradingPointId == id)
             .AnyAsync();
 
-        if (hasInventory || hasPurchases || hasSales)
+        var hasAssignedEmployees = await _context.Employees
+            .Find(e => e.TradingPointId == id).AnyAsync();
+        if (hasInventory || hasPurchases || hasSales || hasAssignedEmployees)
             return Conflict(
-                "Cannot delete a trading point with related records.");
+                "Cannot delete a trading point with related records or assigned employees.");
 
         var result = await _context.TradingPoints
             .DeleteOneAsync(p => p.Id == id);

@@ -1,4 +1,7 @@
-﻿@model List<TradingManagementSystem.Domain.Entities.Sale>
+@model List<TradingManagementSystem.Domain.Entities.Sale>
 @{ ViewData["Title"] = "Продажі"; }
-<div class="page-heading"><div><span class="eyebrow">ПРОДАЖІ</span><h1>Історія продажів</h1><p>Проведені торгові операції</p></div><a class="subtle-btn" href="/swagger">Продаж через API →</a></div>
-<div class="table-card"><table class="data-table"><thead><tr><th>ID</th><th>Дата</th><th>Продавець</th><th>Позицій</th><th>Сума</th></tr></thead><tbody>@foreach(var s in Model) { <tr><td class="mono">@s.Id</td><td>@s.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")</td><td>@s.SellerId</td><td>@s.Items.Count</td><td>@s.TotalAmount</td></tr> }</tbody></table></div>
+<div class="page-heading"><div><span class="eyebrow">ПРОДАЖІ</span><h1>Історія продажів</h1><p>@(User.IsInRole("Seller") ? "Твої завершені продажі" : "Проведені торгові операції")</p></div>@if(User.IsInRole("Seller")){<a class="primary-btn" asp-controller="Commerce" asp-action="NewSale" style="text-decoration:none">+ Оформити продаж</a>}</div>
+<div class="table-card"><div class="sf-table-scroll"><table class="data-table"><thead><tr><th>Номер</th><th>Дата</th><th>Позицій</th><th>Оплата</th><th>Сума, грн</th></tr></thead><tbody>
+@foreach(var s in Model.OrderByDescending(x=>x.CreatedAt)) {<tr><td title="@s.Id">@(s.Id.Length>8?s.Id.Substring(0,8):s.Id)</td><td>@s.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td><td>@s.Items.Count</td><td>@(s.PaymentMethod==TradingManagementSystem.Domain.Enums.PaymentMethod.Cash?"Готівка":"Картка")</td><td><strong>@s.TotalAmount.ToString("0.00")</strong></td></tr>}
+@if(Model.Count==0){<tr><td colspan="5">Продажів поки немає.</td></tr>}
+</tbody></table></div></div>

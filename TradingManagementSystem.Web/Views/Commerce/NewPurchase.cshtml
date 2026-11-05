@@ -1,0 +1,40 @@
+@model TradingManagementSystem.Web.Models.PurchaseFormModel
+@using TradingManagementSystem.Domain.Entities
+@{
+    ViewData["Title"] = "Нова закупівля";
+    var suppliers = (List<Supplier>)ViewBag.Suppliers;
+    var points = (List<TradingPoint>)ViewBag.Points;
+    var products = (List<Product>)ViewBag.Products;
+    var lines = Model.Items.Count > 0 ? Model.Items : new List<TradingManagementSystem.Web.Models.PurchaseLineForm> { new() };
+}
+<div class="page-heading"><div><span class="eyebrow">ПОСТАЧАННЯ</span><h1>Нова закупівля</h1><p>Вибери постачальника, магазин та позиції. Закупівля ще не збільшує залишок.</p></div></div>
+@if (ViewBag.Error is string err) { <div class="sf-form-error" role="alert">@err</div> }
+<form asp-controller="Commerce" asp-action="NewPurchase" method="post" asp-antiforgery="true" class="content-card sf-business-form">
+    
+    <div class="sf-form-two">
+      <div><label for="supplier">Постачальник</label><select id="supplier" name="SupplierId" class="form-select" required><option value="">— Вибери постачальника —</option>@foreach(var s in suppliers) {<option value="@s.Id" selected="@(Model.SupplierId == s.Id)">@s.Name</option>}</select></div>
+      <div><label for="point">Торгова точка</label><select id="point" name="TradingPointId" class="form-select" required><option value="">— Вибери торгову точку —</option>@foreach(var p in points) {<option value="@p.Id" selected="@(Model.TradingPointId == p.Id)">@p.Name</option>}</select></div>
+    </div>
+    <h2 class="sf-form-title">Товари закупівлі</h2>
+    <div id="purchase-lines" class="sf-line-list">
+    @for (var i = 0; i < lines.Count; i++) {
+      <div class="sf-line-row">
+        <div><label>Товар</label><select class="form-select" name="Items[@i].ProductId" required><option value="">— Обери товар —</option>@foreach(var p in products) {<option value="@p.Id" selected="@(lines[i].ProductId == p.Id)">@p.Name (@p.Sku)</option>}</select></div>
+        <div><label>Кількість</label><input class="form-control" name="Items[@i].Quantity" type="number" min="1" max="100000" value="@lines[i].Quantity" required /></div>
+        <div><label>Закупівельна ціна, грн</label><input class="form-control" name="Items[@i].PurchasePrice" type="number" min="0" step="0.01" value="@lines[i].PurchasePrice.ToString(System.Globalization.CultureInfo.InvariantCulture)" required /></div>
+        <button type="button" class="sf-delete-line" onclick="this.closest('.sf-line-row').remove(); sfReindex('purchase-lines');" aria-label="Прибрати рядок">×</button>
+      </div>
+    }
+    </div>
+    <template id="purchase-template"><div class="sf-line-row">
+      <div><label>Товар</label><select class="form-select" name="Items[ROWINDEX].ProductId" required><option value="">— Обери товар —</option>@foreach(var p in products) {<option value="@p.Id">@p.Name (@p.Sku)</option>}</select></div>
+      <div><label>Кількість</label><input class="form-control" name="Items[ROWINDEX].Quantity" type="number" min="1" max="100000" value="1" required /></div>
+      <div><label>Закупівельна ціна, грн</label><input class="form-control" name="Items[ROWINDEX].PurchasePrice" type="number" min="0" step="0.01" value="0" required /></div>
+      <button type="button" class="sf-delete-line" onclick="this.closest('.sf-line-row').remove(); sfReindex('purchase-lines');" aria-label="Прибрати рядок">×</button>
+    </div></template>
+    <div class="sf-form-actions"><button class="subtle-btn" type="button" onclick="sfAddLine('purchase-lines','purchase-template')">+ Додати позицію</button><button class="primary-btn" type="submit">Створити закупівлю</button><a class="subtle-btn" asp-controller="Catalog" asp-action="Purchases">Скасувати</a></div>
+</form>
+@section Scripts { <script>
+function sfReindex(id){document.querySelectorAll('#'+id+' .sf-line-row').forEach((row,i)=>{row.querySelectorAll('[name]').forEach(el=>el.name=el.name.replace(/Items\[\d+\]/,'Items['+i+']'));});}
+function sfAddLine(id,templateId){const host=document.getElementById(id);if(host.querySelectorAll('.sf-line-row').length>=50)return;host.insertAdjacentHTML('beforeend',document.getElementById(templateId).innerHTML.replaceAll('ROWINDEX',host.querySelectorAll('.sf-line-row').length));sfReindex(id);}
+</script> }

@@ -1,6 +1,45 @@
-﻿@model List<TradingManagementSystem.Domain.Entities.Employee>
+@model TradingManagementSystem.Web.Models.EmployeeManagementPage
+@using TradingManagementSystem.Domain.Enums
 @{ ViewData["Title"] = "Працівники"; }
-<div class="page-heading"><div><span class="eyebrow">КЕРУВАННЯ ДОСТУПОМ</span><h1>Працівники</h1><p>Облікові записи та ролі користувачів</p></div><a asp-action="Create" class="primary-btn">+ Додати працівника</a></div>
-<div class="table-card"><table class="data-table"><thead><tr><th>Працівник</th><th>Логін</th><th>Роль</th><th>Стан</th></tr></thead><tbody>
-@foreach(var item in Model) { <tr><td>@item.FirstName @item.LastName</td><td>@item.Login</td><td>@item.Role</td><td>@(item.IsActive ? "Активний" : "Вимкнений")</td></tr> }
-</tbody></table></div>
+<div class="page-heading">
+    <div><span class="eyebrow">КЕРУВАННЯ ДОСТУПОМ</span><h1>Працівники</h1>
+        <p>@(Model.IsDirector ? "Завідувачі, менеджери та облікові записи організації" : "Продавці твоєї торгової точки")</p></div>
+    <a asp-action="Create" class="primary-btn">+ Додати працівника</a>
+</div>
+<div class="table-card">
+<table class="data-table">
+<thead><tr><th>Працівник</th><th>Логін</th><th>Роль</th><th>Торгова точка</th><th>Статус</th><th>Дії</th></tr></thead>
+<tbody>
+@foreach (var item in Model.Employees)
+{
+    var canEdit = Model.IsDirector
+        ? item.Role != EmployeeRole.Director
+        : item.Role == EmployeeRole.Seller && item.TradingPointId == Model.OwnPointId;
+    var roleName = item.Role switch { EmployeeRole.Director => "Директор", EmployeeRole.TradingPointManager => "Завідувач", EmployeeRole.SupplyManager => "Менеджер із постачання", EmployeeRole.Seller => "Продавець", _ => item.Role.ToString() };
+    <tr>
+        <td><strong>@item.FirstName @item.LastName</strong></td>
+        <td>@item.Login</td>
+        <td>@roleName</td>
+        <td>@(item.TradingPointId is not null && Model.PointNames.TryGetValue(item.TradingPointId, out var name) ? name : "—")</td>
+        <td>@(item.IsActive ? "Активний" : "Деактивований")</td>
+        <td>
+        @if (canEdit)
+        {
+            <a asp-action="Edit" asp-route-id="@item.Id" class="subtle-btn">Редагувати</a>
+            <form asp-action="SetActive" method="post" class="d-inline ms-2">
+                <input type="hidden" name="id" value="@item.Id" />
+                <input type="hidden" name="isActive" value="@(item.IsActive ? "false" : "true")" />
+                <button type="submit" class="subtle-btn">@(item.IsActive ? "Деактивувати" : "Активувати")</button>
+            </form>
+        }
+        else { <span>—</span> }
+        </td>
+    </tr>
+}
+@if (Model.Employees.Count == 0)
+{
+    <tr><td colspan="6">Працівників поки немає. Натисни «Додати працівника».</td></tr>
+}
+</tbody>
+</table>
+</div>

@@ -1,0 +1,28 @@
+@model TradingManagementSystem.Web.Models.SaleFormModel
+@using TradingManagementSystem.Domain.Entities
+@{ ViewData["Title"] = "Новий продаж"; var products = (List<Product>)ViewBag.Products; var stock = (Dictionary<string,int>)ViewBag.Stock; var lines = Model.Items.Count > 0 ? Model.Items : new List<TradingManagementSystem.Web.Models.SaleLineForm> { new() }; }
+<div class="page-heading"><div><span class="eyebrow">КАСА</span><h1>Оформити продаж</h1><p>Товар списується лише з твоєї торгової точки після підтвердження операції.</p></div></div>
+@if (ViewBag.Error is string err) { <div class="sf-form-error" role="alert">@err</div> }
+<form method="post" asp-antiforgery="true" asp-controller="Commerce" asp-action="NewSale" class="content-card sf-business-form">
+ <input type="hidden" name="RequestId" value="@Model.RequestId" />
+ <h2 class="sf-form-title">Кошик</h2>
+ <div id="sale-lines" class="sf-line-list">
+ @for(var i=0;i<lines.Count;i++) {
+ <div class="sf-line-row sf-sale-line">
+   <div><label>Товар</label><select class="form-select" name="Items[@i].ProductId" required><option value="">— Вибери товар —</option>@foreach(var p in products) { <option value="@p.Id" selected="@(lines[i].ProductId == p.Id)">@p.Name · @p.SellingPrice.ToString("0.00") грн · є @stock[p.Id] шт.</option> }</select></div>
+   <div><label>Кількість</label><input class="form-control" name="Items[@i].Quantity" type="number" min="1" max="100000" value="@lines[i].Quantity" required /></div>
+   <button type="button" class="sf-delete-line" onclick="this.closest('.sf-line-row').remove(); sfReindex('sale-lines');" aria-label="Прибрати позицію">×</button>
+ </div> }
+ </div>
+ <template id="sale-template"><div class="sf-line-row sf-sale-line">
+   <div><label>Товар</label><select class="form-select" name="Items[ROWINDEX].ProductId" required><option value="">— Вибери товар —</option>@foreach(var p in products) { <option value="@p.Id">@p.Name · @p.SellingPrice.ToString("0.00") грн · є @stock[p.Id] шт.</option> }</select></div>
+   <div><label>Кількість</label><input class="form-control" name="Items[ROWINDEX].Quantity" type="number" min="1" max="100000" value="1" required /></div>
+   <button type="button" class="sf-delete-line" onclick="this.closest('.sf-line-row').remove(); sfReindex('sale-lines');" aria-label="Прибрати позицію">×</button>
+ </div></template>
+ <div class="sf-form-two" style="max-width:460px"><div><label for="payment">Спосіб оплати</label><select id="payment" class="form-select" name="PaymentMethod"><option value="0">Готівка</option><option value="1" selected="@(Model.PaymentMethod == TradingManagementSystem.Domain.Enums.PaymentMethod.Card)">Картка</option></select></div></div>
+ <div class="sf-form-actions"><button class="subtle-btn" type="button" onclick="sfAddLine('sale-lines','sale-template')">+ Додати товар</button><button class="primary-btn" type="submit">Завершити продаж</button><a class="subtle-btn" asp-controller="Catalog" asp-action="Sales">Скасувати</a></div>
+</form>
+@section Scripts { <script>
+function sfReindex(id){document.querySelectorAll('#'+id+' .sf-line-row').forEach((row,i)=>{row.querySelectorAll('[name]').forEach(el=>el.name=el.name.replace(/Items\[\d+\]/,'Items['+i+']'));});}
+function sfAddLine(id,templateId){const host=document.getElementById(id);if(host.querySelectorAll('.sf-line-row').length>=50)return;host.insertAdjacentHTML('beforeend',document.getElementById(templateId).innerHTML.replaceAll('ROWINDEX',host.querySelectorAll('.sf-line-row').length));sfReindex(id);}
+</script> }

@@ -1,4 +1,4 @@
-﻿
+
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using TradingManagementSystem.Application.Services;
@@ -34,7 +34,7 @@ public class ReceiptsApiController : ControllerBase
         return Ok(receipts);
     }
 
-    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SupplyManager")]
     [HttpPost]
     public async Task<IActionResult> Register(
         RegisterReceiptRequest request)

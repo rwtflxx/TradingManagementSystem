@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using TradingManagementSystem.Domain.Enums;
 using MongoDB.Driver;
 using TradingManagementSystem.Domain.Entities;
 using TradingManagementSystem.Infrastructure.Data;
@@ -20,16 +22,29 @@ public class ProductsApiController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<Product>>> GetAll()
     {
-        var products = await _context.Products
-            .Find(_ => true)
-            .ToListAsync();
-
-        return Ok(products);
+        var actor = await CurrentAsync();
+        if (actor == null) return Unauthorized();
+        if (actor.Role == EmployeeRole.Seller)
+        {
+            if (string.IsNullOrWhiteSpace(actor.TradingPointId)) return Forbid();
+            var stock = await _context.InventoryItems.Find(i => i.TradingPointId == actor.TradingPointId && i.Quantity > 0).ToListAsync();
+            var ids = stock.Select(i => i.ProductId).Distinct().ToList();
+            return Ok(await _context.Products.Find(Builders<Product>.Filter.In(p => p.Id, ids)).ToListAsync());
+        }
+        return Ok(await _context.Products.Find(_ => true).ToListAsync());
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Product>> GetById(string id)
     {
+        var actor = await CurrentAsync();
+        if (actor == null) return Unauthorized();
+        if (actor.Role == EmployeeRole.Seller)
+        {
+            if (string.IsNullOrWhiteSpace(actor.TradingPointId)) return Forbid();
+            if (!await _context.InventoryItems.Find(i => i.ProductId == id && i.TradingPointId == actor.TradingPointId && i.Quantity > 0).AnyAsync())
+                return NotFound();
+        }
         var product = await _context.Products
             .Find(p => p.Id == id)
             .FirstOrDefaultAsync();
@@ -42,7 +57,14 @@ public class ProductsApiController : ControllerBase
         return Ok(product);
     }
 
-    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager")]
+    private async Task<Employee?> CurrentAsync()
+    {
+        var id = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(id)) return null;
+        return await _context.Employees.Find(x => x.Id == id && x.IsActive).FirstOrDefaultAsync();
+    }
+
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SupplyManager")]
     [HttpPost]
     public async Task<ActionResult<Product>> Create(
         CreateProductRequest request)
@@ -91,7 +113,7 @@ public class ProductsApiController : ControllerBase
             product);
     }
 
-    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SupplyManager")]
     [HttpPut("{id}")]
     public async Task<ActionResult<Product>> Update(
         string id,
@@ -126,7 +148,7 @@ public class ProductsApiController : ControllerBase
         return Ok(product);
     }
 
-    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SupplyManager")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id)
     {

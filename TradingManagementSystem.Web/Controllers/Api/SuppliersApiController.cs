@@ -1,4 +1,4 @@
-﻿
+
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using TradingManagementSystem.Domain.Entities;
@@ -18,7 +18,7 @@ public class SuppliersApiController : ControllerBase
         _context = context;
     }
 
-    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager,TradingPointManager")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager")]
     [HttpGet]
     public async Task<ActionResult<List<Supplier>>> GetAll()
     {
@@ -29,7 +29,7 @@ public class SuppliersApiController : ControllerBase
         return Ok(suppliers);
     }
 
-    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager,TradingPointManager")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager")]
     [HttpGet("{id}")]
     public async Task<ActionResult<Supplier>> GetById(string id)
     {
@@ -45,7 +45,7 @@ public class SuppliersApiController : ControllerBase
         return Ok(supplier);
     }
 
-    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SupplyManager")]
     [HttpPost]
     public async Task<ActionResult<Supplier>> Create(
         CreateSupplierRequest request)
@@ -76,7 +76,7 @@ public class SuppliersApiController : ControllerBase
             supplier);
     }
 
-    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SupplyManager")]
     [HttpPut("{id}")]
     public async Task<ActionResult<Supplier>> Update(
         string id,
@@ -111,7 +111,7 @@ public class SuppliersApiController : ControllerBase
         return Ok(supplier);
     }
 
-    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Director,SupplyManager")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SupplyManager")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id)
     {

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
@@ -36,7 +36,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
             if (string.IsNullOrEmpty(userId)) { ctx.RejectPrincipal(); return; }
             var db = ctx.HttpContext.RequestServices.GetRequiredService<MongoDbContext>();
             var current = await db.Employees.Find(x => x.Id == userId && x.IsActive).FirstOrDefaultAsync();
-            if (current == null || current.Role.ToString() != ctx.Principal?.FindFirstValue(ClaimTypes.Role))
+            if (current == null || current.Role.ToString() != ctx.Principal?.FindFirstValue(ClaimTypes.Role) || (current.TradingPointId ?? string.Empty) != (ctx.Principal?.FindFirstValue("sf.point") ?? string.Empty))
             {
                 ctx.RejectPrincipal();
                 await ctx.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
@@ -56,6 +56,7 @@ builder.Services.AddSingleton(new MongoDbContext(mongoConnectionString, mongoDat
 builder.Services.AddScoped<InventoryService>();
 builder.Services.AddScoped<ReceiptService>();
 builder.Services.AddScoped<SaleService>();
+builder.Services.AddScoped<SmartInventoryService>();
 
 var app = builder.Build();
 if (app.Environment.IsDevelopment())

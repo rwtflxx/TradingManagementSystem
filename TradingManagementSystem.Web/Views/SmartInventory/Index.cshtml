@@ -1,0 +1,31 @@
+@model TradingManagementSystem.Web.Models.SmartInventoryPageModel
+@{ ViewData["Title"] = "Smart Inventory"; }
+<div class="page-heading"><div><span class="eyebrow">АНАЛІТИКА ЗАПАСІВ</span><h1>Smart Inventory</h1><p>Автоматичний аналіз залишків та продажів за останні 30 днів. Горизонт планування — 14 днів.</p></div></div>
+<div class="sf-inventory-stats"><div><small>Проаналізовано позицій</small><strong>@Model.Rows.Count</strong></div><div><small>Потребують уваги</small><strong>@Model.Alerts</strong></div><div><small>Критичні залишки</small><strong>@Model.Critical</strong></div></div>
+<div class="table-card"><div class="sf-table-scroll"><table class="data-table"><thead><tr><th>Товар / точка</th><th>Залишок</th><th>Продажі за 30 днів</th><th>Ризик</th><th>Рекомендація</th></tr></thead><tbody>
+@foreach(var row in Model.Rows) {
+  var r=row.Recommendation;
+  <tr><td><strong>@row.ProductName</strong><small class="sf-cell-detail">@row.PointName</small></td>
+  <td><strong>@r.Quantity</strong> / мін. @r.MinimumQuantity</td>
+  <td>@r.SoldLast30Days шт.</td>
+  <td>@if(r.IsCritical){<span class="warning-pill">Критичний</span>} else if(r.IsAtRisk){<span class="warning-pill">Ризик дефіциту</span>} else {<span class="ok-pill">Достатньо</span>}</td>
+  <td>
+  @if (!r.IsAtRisk) { <span>Поповнення поки не потрібне</span> }
+  else {
+    <div class="sf-reco-actions">
+      @if (r.SuggestedTransferQuantity > 0) {
+        <span>Перемістити <strong>@r.SuggestedTransferQuantity</strong> шт. із @row.SourcePointName</span>
+      }
+      @if (r.SuggestedPurchaseQuantity > 0) {
+        <span>Закупити <strong>@r.SuggestedPurchaseQuantity</strong> шт.</span>
+        @if(User.IsInRole("SupplyManager")) {
+          <a class="subtle-btn" asp-controller="Commerce" asp-action="NewPurchase" asp-route-productId="@r.ProductId" asp-route-tradingPointId="@r.TradingPointId" asp-route-quantity="@r.SuggestedPurchaseQuantity">Сформувати закупівлю →</a>
+        }
+      }
+    </div>
+  }
+  </td></tr>
+}
+@if(Model.Rows.Count==0) {<tr><td colspan="5">Немає складських позицій для аналізу. Спершу зареєструй надходження.</td></tr>}
+</tbody></table></div></div>
+<p class="sf-hint">Рекомендації є підказками, а не автоматичними закупівлями чи переміщеннями. Переміщення потрібно проводити окремим підтвердженим процесом. Для кількох магазинів система шукає надлишок товару в іншій точці.</p>

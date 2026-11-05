@@ -1,12 +1,45 @@
-﻿@model TradingManagementSystem.Web.Models.EmployeeInput
+@model TradingManagementSystem.Web.Models.EmployeeInput
 @using TradingManagementSystem.Domain.Enums
-@{ ViewData["Title"] = "Новий працівник"; }
-<div class="page-heading"><div><span class="eyebrow">ПРАЦІВНИКИ</span><h1>Додати працівника</h1></div></div>
-<div class="content-card narrow"><form method="post" asp-action="Create"><div asp-validation-summary="All" class="validation-summary"></div>
-<label>Ім'я</label><input asp-for="FirstName" class="form-control" required />
-<label>Прізвище</label><input asp-for="LastName" class="form-control" required />
-<label>Логін (латиниця)</label><input asp-for="Login" class="form-control" required />
-<label>Пароль (від 10 символів)</label><input asp-for="Password" type="password" class="form-control" minlength="10" autocomplete="new-password" required />
-<label>Роль</label><select asp-for="Role" asp-items="Html.GetEnumSelectList<EmployeeRole>()" class="form-select"></select>
-<button class="primary-btn mt-3" type="submit">Створити працівника</button>
-</form></div>
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{ ViewData["Title"] = "Новий працівник"; var isDirector = (bool)(ViewBag.IsDirector ?? false); var points = ViewBag.Points as List<SelectListItem> ?? new(); }
+<div class="page-heading"><div><span class="eyebrow">ПРАЦІВНИКИ</span><h1>Додати працівника</h1><p>Новий користувач входить зі своїм логіном і паролем</p></div></div>
+<div class="content-card narrow">
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="All" class="validation-summary" role="alert"></div>
+    <label asp-for="FirstName">Ім'я</label><input asp-for="FirstName" class="form-control" autocomplete="off" required />
+    <label asp-for="LastName">Прізвище</label><input asp-for="LastName" class="form-control" autocomplete="off" required />
+    <label asp-for="Login">Логін (латиниця)</label><input asp-for="Login" class="form-control" autocomplete="off" required />
+    <label asp-for="Password">Початковий пароль (10+ символів)</label><input asp-for="Password" type="password" class="form-control" minlength="10" autocomplete="new-password" required />
+    @if (isDirector)
+    {
+        <label asp-for="Role">Роль</label>
+        <select asp-for="Role" class="form-select" id="employeeRoleSelect">
+            <option value="@EmployeeRole.TradingPointManager">Завідувач торгової точки</option>
+            <option value="@EmployeeRole.SupplyManager">Менеджер із постачання</option>
+            <option value="@EmployeeRole.Seller">Продавець (адміністративне створення)</option>
+        </select>
+    }
+    else
+    {
+        <input type="hidden" asp-for="Role" value="@EmployeeRole.Seller" />
+        <p><strong>Роль:</strong> Продавець</p>
+    }
+    <label asp-for="TradingPointId">Торгова точка (обов'язкова для завідувача та продавця)</label>
+    @if (isDirector)
+    {
+        <select asp-for="TradingPointId" asp-items="points" class="form-select" id="employeePointSelect">
+            <option value="">Не призначено</option>
+        </select>
+        <p class="sf-field-note">Менеджеру із постачання торгову точку призначати не потрібно.</p>
+    }
+    else
+    {
+        <select asp-for="TradingPointId" asp-items="points" class="form-select" disabled></select>
+        <input type="hidden" asp-for="TradingPointId" />
+        <p class="sf-field-note">Продавець буде закріплений за твоєю торговою точкою.</p>
+    }
+    <button class="primary-btn mt-3" type="submit">Створити працівника</button>
+    <a asp-action="Index" class="subtle-btn ms-2">Скасувати</a>
+    <p class="sf-field-note mt-3">Передай початковий пароль працівникові приватно. Він може змінити його в «Мій профіль».</p>
+</form>
+</div>
