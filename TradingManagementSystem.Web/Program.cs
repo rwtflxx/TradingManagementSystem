@@ -5,6 +5,9 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 using MongoDB.Driver;
 using System.Security.Claims;
 using TradingManagementSystem.Application.Services;
+using TradingManagementSystem.Application.Strategies;
+using TradingManagementSystem.Domain.Repositories;
+using TradingManagementSystem.Infrastructure.Repositories;
 using TradingManagementSystem.Domain.Entities;
 using TradingManagementSystem.Infrastructure.Data;
 
@@ -53,10 +56,13 @@ var mongoConnectionString = builder.Configuration["MongoDb:ConnectionString"]
 var mongoDatabaseName = builder.Configuration["MongoDb:DatabaseName"]
     ?? throw new InvalidOperationException("MongoDB database name is missing.");
 builder.Services.AddSingleton(new MongoDbContext(mongoConnectionString, mongoDatabaseName));
+builder.Services.AddScoped<IProductRepository, MongoProductRepository>();
 builder.Services.AddScoped<InventoryService>();
 builder.Services.AddScoped<ReceiptService>();
 builder.Services.AddScoped<SaleService>();
-builder.Services.AddScoped<SmartInventoryService>();
+builder.Services.AddSingleton<ITargetStockStrategy>(new StandardTargetStockStrategy());
+builder.Services.AddScoped<SmartInventoryService>(sp =>
+    new SmartInventoryService(sp.GetRequiredService<ITargetStockStrategy>()));
 
 var app = builder.Build();
 if (app.Environment.IsDevelopment())

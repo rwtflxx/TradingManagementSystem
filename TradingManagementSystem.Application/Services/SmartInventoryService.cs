@@ -1,4 +1,5 @@
 using TradingManagementSystem.Domain.Entities;
+using TradingManagementSystem.Application.Strategies;
 
 namespace TradingManagementSystem.Application.Services;
 
@@ -7,6 +8,15 @@ public sealed class SmartInventoryService
 {
     public const int HistoryDays = 30;
     public const int PlanningDays = 14;
+    private readonly ITargetStockStrategy _targetStrategy;
+
+    // Keep existing tests and consumers source-compatible.
+    public SmartInventoryService() : this(new StandardTargetStockStrategy()) { }
+
+    public SmartInventoryService(ITargetStockStrategy targetStrategy)
+    {
+        _targetStrategy = targetStrategy ?? throw new ArgumentNullException(nameof(targetStrategy));
+    }
 
     public IReadOnlyList<InventoryRecommendation> Analyze(
         IEnumerable<InventoryItem> stock,
@@ -28,8 +38,7 @@ public sealed class SmartInventoryService
                 .Where(i => i.ProductId == item.ProductId)
                 .Sum(i => Math.Max(0, i.Quantity));
             var daily = (decimal)sold / HistoryDays;
-            var target = Math.Max(min * 2,
-                checked((int)Math.Ceiling(daily * PlanningDays)) + min);
+            var target = _targetStrategy.CalculateTarget(min, daily);
             var critical = item.Quantity <= min;
             var atRisk = critical || item.Quantity - daily * PlanningDays < min;
             var needed = atRisk ? Math.Max(0, target - item.Quantity) : 0;
@@ -44,9 +53,8 @@ public sealed class SmartInventoryService
                     var candidateSold = relevantSales.Where(s => s.TradingPointId == candidate.TradingPointId)
                         .SelectMany(s => s.Items).Where(s => s.ProductId == item.ProductId)
                         .Sum(s => Math.Max(0, s.Quantity));
-                    var sourceTarget = Math.Max(Math.Max(0, candidate.MinimumQuantity) * 2,
-                        checked((int)Math.Ceiling((decimal)candidateSold / HistoryDays * PlanningDays)) +
-                        Math.Max(0, candidate.MinimumQuantity));
+                    var sourceTarget = _targetStrategy.CalculateTarget(
+                        candidate.MinimumQuantity, (decimal)candidateSold / HistoryDays);
                     var surplus = Math.Max(0, candidate.Quantity - sourceTarget);
                     var possible = Math.Min(needed, surplus);
                     if (possible > transfer)

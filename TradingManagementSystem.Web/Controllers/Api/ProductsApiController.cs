@@ -3,6 +3,7 @@ using System.Security.Claims;
 using TradingManagementSystem.Domain.Enums;
 using MongoDB.Driver;
 using TradingManagementSystem.Domain.Entities;
+using TradingManagementSystem.Domain.Repositories;
 using TradingManagementSystem.Infrastructure.Data;
 using TradingManagementSystem.Web.Models.Api;
 
@@ -13,10 +14,12 @@ namespace TradingManagementSystem.Web.Controllers.Api;
 public class ProductsApiController : ControllerBase
 {
     private readonly MongoDbContext _context;
+    private readonly IProductRepository _products;
 
-    public ProductsApiController(MongoDbContext context)
+    public ProductsApiController(MongoDbContext context, IProductRepository products)
     {
         _context = context;
+        _products = products;
     }
 
     [HttpGet]
@@ -29,9 +32,9 @@ public class ProductsApiController : ControllerBase
             if (string.IsNullOrWhiteSpace(actor.TradingPointId)) return Forbid();
             var stock = await _context.InventoryItems.Find(i => i.TradingPointId == actor.TradingPointId && i.Quantity > 0).ToListAsync();
             var ids = stock.Select(i => i.ProductId).Distinct().ToList();
-            return Ok(await _context.Products.Find(Builders<Product>.Filter.In(p => p.Id, ids)).ToListAsync());
+            return Ok(await _products.GetByIdsAsync(ids));
         }
-        return Ok(await _context.Products.Find(_ => true).ToListAsync());
+        return Ok(await _products.GetAllAsync());
     }
 
     [HttpGet("{id}")]
@@ -45,9 +48,7 @@ public class ProductsApiController : ControllerBase
             if (!await _context.InventoryItems.Find(i => i.ProductId == id && i.TradingPointId == actor.TradingPointId && i.Quantity > 0).AnyAsync())
                 return NotFound();
         }
-        var product = await _context.Products
-            .Find(p => p.Id == id)
-            .FirstOrDefaultAsync();
+        var product = await _products.GetByIdAsync(id);
 
         if (product == null)
         {
@@ -84,11 +85,7 @@ public class ProductsApiController : ControllerBase
             return BadRequest("Selling price cannot be negative.");
         }
 
-        var existingProduct = await _context.Products
-            .Find(p => p.Sku == request.Sku)
-            .FirstOrDefaultAsync();
-
-        if (existingProduct != null)
+        if (await _products.ExistsBySkuAsync(request.Sku))
         {
             return Conflict("A product with this SKU already exists.");
         }
@@ -105,7 +102,7 @@ public class ProductsApiController : ControllerBase
             request.SellingPrice,
             request.Description);
 
-        await _context.Products.InsertOneAsync(product);
+        await _products.AddAsync(product);
 
         return CreatedAtAction(
             nameof(GetById),
@@ -119,9 +116,7 @@ public class ProductsApiController : ControllerBase
         string id,
         UpdateProductRequest request)
     {
-        var product = await _context.Products
-            .Find(p => p.Id == id)
-            .FirstOrDefaultAsync();
+        var product = await _products.GetByIdAsync(id);
 
         if (product == null)
         {
@@ -141,9 +136,7 @@ public class ProductsApiController : ControllerBase
             return BadRequest(ex.Message);
         }
 
-        await _context.Products.ReplaceOneAsync(
-            p => p.Id == id,
-            product);
+        await _products.ReplaceAsync(product);
 
         return Ok(product);
     }
@@ -152,10 +145,7 @@ public class ProductsApiController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id)
     {
-        var result = await _context.Products
-            .DeleteOneAsync(p => p.Id == id);
-
-        if (result.DeletedCount == 0)
+        if (!await _products.DeleteAsync(id))
         {
             return NotFound();
         }
