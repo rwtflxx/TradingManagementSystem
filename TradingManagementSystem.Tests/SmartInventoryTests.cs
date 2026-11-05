@@ -165,7 +165,7 @@ public class SmartInventoryServiceTests
         var results = new SmartInventoryService().Analyze(
             new[] { Stock("keyboard", "destination", 2), Stock("keyboard", "source", 30) },
             Array.Empty<Sale>(), Now);
-        var r = Assert.Single(results.Where(x => x.TradingPointId == "destination"));
+        var r = Assert.Single(results, x => x.TradingPointId == "destination");
         Assert.Equal("source", r.SuggestedTransferFromId);
         Assert.Equal(8, r.SuggestedTransferQuantity);
         Assert.Equal(0, r.SuggestedPurchaseQuantity);
@@ -177,7 +177,7 @@ public class SmartInventoryServiceTests
         var results = new SmartInventoryService().Analyze(
             new[] { Stock("keyboard", "destination", 2), Stock("keyboard", "source", 13) },
             Array.Empty<Sale>(), Now);
-        var r = Assert.Single(results.Where(x => x.TradingPointId == "destination"));
+        var r = Assert.Single(results, x => x.TradingPointId == "destination");
         Assert.Equal("source", r.SuggestedTransferFromId);
         Assert.Equal(3, r.SuggestedTransferQuantity);
         Assert.Equal(5, r.SuggestedPurchaseQuantity);
@@ -193,7 +193,7 @@ public class SmartInventoryServiceTests
                 Stock("keyboard", "sourceA", 12),
                 Stock("keyboard", "sourceB", 15)
             }, Array.Empty<Sale>(), Now);
-        var r = Assert.Single(results.Where(x => x.TradingPointId == "destination"));
+        var r = Assert.Single(results, x => x.TradingPointId == "destination");
         Assert.Equal("sourceB", r.SuggestedTransferFromId);
         Assert.Equal(5, r.SuggestedTransferQuantity);
         Assert.Equal(3, r.SuggestedPurchaseQuantity);
@@ -205,7 +205,7 @@ public class SmartInventoryServiceTests
         var results = new SmartInventoryService().Analyze(
             new[] { Stock("keyboard", "destination", 2), Stock("mouse", "source", 30) },
             Array.Empty<Sale>(), Now);
-        var r = Assert.Single(results.Where(x => x.TradingPointId == "destination"));
+        var r = Assert.Single(results, x => x.TradingPointId == "destination");
         Assert.Null(r.SuggestedTransferFromId);
         Assert.Equal(0, r.SuggestedTransferQuantity);
         Assert.Equal(8, r.SuggestedPurchaseQuantity);
@@ -218,7 +218,7 @@ public class SmartInventoryServiceTests
         var results = new SmartInventoryService().Analyze(
             new[] { Stock("keyboard", "destination", 2), Stock("keyboard", "source", 13) },
             new[] { sale }, Now);
-        var r = Assert.Single(results.Where(x => x.TradingPointId == "destination"));
+        var r = Assert.Single(results, x => x.TradingPointId == "destination");
         Assert.Null(r.SuggestedTransferFromId);
         Assert.Equal(8, r.SuggestedPurchaseQuantity);
     }
