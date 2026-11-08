@@ -364,3 +364,8 @@ FodyWeavers.xsd
 /CoverageReport-Web/
 /TestResults-Web/
 
+
+# Local installation helpers
+/Install-*.ps1
+/Fix-*.ps1
+/LAB4_Instructions.txt
